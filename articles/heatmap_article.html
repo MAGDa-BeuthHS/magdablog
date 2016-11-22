@@ -16,7 +16,7 @@
     <div class="wrapper">
       <header>
         <a href="https://magda-beuthhs.github.io/magdablog/" alt="MAGDa Blog"><img src="../media/magda_logo.png" alt="MAGDa Logo" width="150"></a>
-        <h1>MAGDa - Management und Analyse Geotemporaler Daten</h1>
+        <p>MAGDa - Management und Analyse Geotemporaler Daten</p>
 
         <p class="view"><a href="https://github.com/MAGDa-BeuthHS/magdablog">View the Project on GitHub <small>MAGDa-BeuthHS/magdablog</small></a></p>
 
@@ -28,7 +28,7 @@
         </ul>
       </header>
       <section>
-        <h2>ETL Pipeline am Beispiel einer Verkehrsdatenanalyse in Dresden</h2>
+        <h1>ETL Pipeline am Beispiel einer Verkehrsdatenanalyse in Dresden</h1>
         <small>Posted am 22.11.2016</small>
         <p>Für die Stadt Dresden liegt ein umfangreicher Datenbestand in Form von Floating Car Data (FCD) vor. Die Floating Car Data umfassen die Positionsdaten und Geschwindigkeitsinformationen aller Taxen in Dresden. Diese Daten sind sehr umfangreich, da mehr als 500 Taxen in Dresden unterwegs sind, die alle 5 Sekunde einen Datensatz senden. Floating Car Data können als Anreicherung für stationäre Sensordaten dienen, denn es gibt selten Sensoren in weniger besiedelten Stadtgebieten, wohingegen Taxen das komplette Stadtgebiet abdecken. Häufig werden Floating Car Data für die Berechnung von Reisezeiten verwendet. Die errechneten Reisezeiten können in Verkehrsmanagementsysteme zur Planung von Lichtsignalanlagen, neuen Straßen und Ampelschaltungen dienen. Darüber hinaus lassen sich diese Daten für Navigationssystem benutzen, die den Verkehrsfluss in der Stadt besser kennen und darauf basierend Umfahrungen vorschlagen können.</p>
         <p>Dieser Artikel beschreibt die Etablierung einer ETL-Pipeline für einen Geodaten Use Case. ETL steht für <b>E</b>xtract, <b>T</b>ransform, <b>L</b>oad. Die ETL-Pipeline extrahiert Taxidaten aus Dresden, transformiert die Daten zur Aggregation und Aufbereitung und lädt die Daten in eine verteilte SQL-Datenbank. Die analysierten Daten dienen als Ausgangspunkt für einen Webservice, der Verkehrsvisualisierung mittels Heatmaps zur Verfügung stellt.</p>
