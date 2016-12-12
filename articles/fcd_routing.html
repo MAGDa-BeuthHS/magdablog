@@ -30,27 +30,144 @@
       <section>
         <h1>Statistische Analyse und Visualisierung von Floating Car Data</h1>
         <small>Posted am 12.12.2016</small>
-        <p>Für die Stadt Dresden liegt ein umfangreicher Datenbestand in Form von Floating Car Data (FCD) vor. Die Floating Car Data umfassen die Positionsdaten und Geschwindigkeitsinformationen aller Taxen in Dresden. Diese Daten sind sehr umfangreich, da mehr als 500 Taxen in Dresden unterwegs sind, die alle 5 Sekunde einen Datensatz senden. Floating Car Data können als Anreicherung für stationäre Sensordaten dienen, denn es gibt selten Sensoren in weniger besiedelten Stadtgebieten, wohingegen Taxen das komplette Stadtgebiet abdecken. Häufig werden Floating Car Data für die Berechnung von Reisezeiten verwendet. Die errechneten Reisezeiten können in Verkehrsmanagementsysteme zur Planung von Lichtsignalanlagen, neuen Straßen und Ampelschaltungen dienen. Darüber hinaus lassen sich diese Daten für Navigationssystem benutzen, die den Verkehrsfluss in der Stadt besser kennen und darauf basierend Umfahrungen vorschlagen können.</p>
-        <p>Dieser Artikel beschreibt die Etablierung einer ETL-Pipeline für einen Geodaten Use Case. ETL steht für <b>E</b>xtract, <b>T</b>ransform, <b>L</b>oad. Die ETL-Pipeline extrahiert Taxidaten aus Dresden, transformiert die Daten zur Aggregation und Aufbereitung und lädt die Daten in eine verteilte SQL-Datenbank. Die analysierten Daten dienen als Ausgangspunkt für einen Webservice, der Verkehrsvisualisierung mittels Heatmaps zur Verfügung stellt.</p>
-        <p>Die Floating Car Data erlauben keinen Rückschluss auf den Gesamtverkehr, die Taxidaten definieren lediglich einen Ausschnitt aus dem Verkehrszustand. Mit Hilfe dieser hochwertigen Daten können grobe Verkehrsmuster erkannt und ausgewertet werden. In diesem Artikel geht es weiterhin um die Analyse und Visualisierung der Daten mit Heatmaps. Heatmaps sind eine sehr einfache Visualisierungsform, deren Werte auf einer zweidimensionalen Definitionsmenge als Farben repräsentiert werden.</p>
-        <p>Ein Beispiel einer Heatmap ist die Darstellung der Aufenthaltsdauer der Spieler auf dem Fußballfeld. Aus dieser Visualisierung können Trainer Schwachstellen in der Abwehr und häufige Angriffsversuche erkennen. Bezogen auf den FCD Anwendungsfall dient eine Heatmap zur Beantwortung verkehrstypischer Fragen. Passende Beispiele sind: "Wann komme ich wo schnell voran?" oder "Wann fahre ich am besten los, um Ort X möglichst optimal zu erreichen?"</p>
-        <p>Im Fall von Dresden werden, wie bereits erwähnt sekündlich, GPS- und Geschwindigkeitsdaten mitgeloggt. Eine Datenaggregation und Berechnung der Heatmaps geschieht durch eine ETL Pipeline. Die Ziele der Pipeline sind:</p>
-        <ol>
-          <li>Einlesen der Floating Car Data aus CSV-Dateien</li>
-          <li>Transformation der Daten in ein anderes Datenformat</li>
-          <li>Ausreißer erkennen und entfernen</li>
-          <li>Zuordnung der Taxidaten auf Rasterausschnitte</li>
-          <li>Aggregation der Daten pro Raster über die Zeit</li>
-          <li>Speicherung der aggregierten Daten</li>
-        </ol>
-        <p>Die komplette ETL Pipeline ist in <a href="../media/etl_prozess.png" alt="ETL Prozess" target="_blank">Abbildung 1</a> zusammengefasst.</p>
-        <img src="../media/etl_prozess.png" alt="ETL Prozess">
-        <p>Im Anschluss werden die Daten für die Heatmap Darstellung in der analytischen Datenbank Impala gespeichert. Ein nachgelagerter REST Service greift auf die Impala Datenbank zu und gibt die Daten an die Visualisierungskomponente zurück. Eine Visualisierung der Taxidaten für den 01.01.2014 um 0 Uhr ist in <a href="../media/heatmap_ansicht.png" alt="Heatmap Ansicht für Dresden" target="_blank">Abbildung 2</a> aufgezeigt. Die Grafik verdeutlicht den Verkehr in der Silvesternacht, rote Bereiche weisen einen höheren Verkehr auf. Wohingegen grüne Bereiche nur sehr geringen Verkehr besitzen. Graue Rechtecke stehen für Regionen in Dresden ohne motorisierten Verkehr wie Parks oder Außenbereiche.</p>
-        <p>Silvester ist eine ganz besondere Nacht, was sich auch in der Heatmap-Visualisierung zeigt. Viele Taxifahrten gibt es demnach in Dresden Neustadt und in der Altstadt. Hier befinden sich viele Silvesterfeiern, das große Feuerwerk an der Elbe und viele Clubs. Viele Taxen sind beispielsweise auch an der Semperoper in Dresden, hier findet jährlich zu Silvester das berühmte Silvester-Gala-Dinner statt. All diese Charakteristika und Events sind in der Heatmap Darstellung erkennbar.</p>
-        <img src="../media/heatmap_ansicht.png" alt="Heatmap Ansicht für Dresden">
-        <p><a href="../media/heatmap_ansicht_details.png" alt="Detailansicht Heatmap Dresden" target="_blank">Abbildung 3</a> zeigt einen detaillierten Ausschnitt der kompletten Heatmap. Der Ausschnitt zeigt die Rasterung und Aggregationsbereiche in Dresden, wobei die Auflösung des Rasters angepasst werden kann. Eine Änderung der Auflösung kann man dafür benutzen, um die Innenstadt zu untergliedern oder eine gröbere Auflösung wählen, damit die Verkehrsmuster in den Randgebieten von Dresden besser erkannt werden können.</p>
-        <img src="../media/heatmap_ansicht_details.png" alt="Detailansicht Heatmap Dresden">
-        <p>Eine andere Möglichkeit zur Analyse der Taxidaten ist die Erstellung von Hot Spots für Taxiendpunkte. Ein prominenter Vertreter von Hot-Spot-Analyse Algorithmen ist Getis-Ord Gi*. Dieser Algorithmus generiert Hot Spots und Cold Spots, die sich mit einer hohen Signifikanz herausbilden. Zeitliche und räumliche Nähe wird dafür mit einberechnet, um möglichst aussagekräftige Spots zu finden. Ein Hot Spots könnte beispielsweise der Bahnhofseingang zu einer bestimmten Zeit sein. Zur Bestimmung der Signifikanz liefert der Algorithmus einen Z-Wert und einen p-Wert. Diese Parameter beschreiben die Güte und Interpretationsmöglichkeit eines gefundenen Hot Spots beziehungsweise Cold Spots. Weitere Informationen zum Hot-Spot-Analyse Algorithmen gibt es im nächsten Blogeintrag.</p>
+        <p>In diesem Blogeintrag wird das Thema einer Bachelorarbeit mit dem Titel "Statistische Analyse und Visualisierung von Floating Car Data"
+beleuchtet. Mit Hilfe der Floating Car Data (GPS- und Zeitdaten, die in diesem Fall von Taxis in Dresden
+generiert wurden) sollten Analysen erstellt werden, die den Einfluss von verschiedenen
+Faktoren auf den Dresdner Verkehr messen. Die daraus entstandenen Ergebnisse wurden für
+die Erstellung eines Routingalgorithmus verwendet, der basierend auf den
+historischen Daten die vermeintlich beste Route finden soll.</p>
+
+<p>Als Einflussfaktoren wurden die Uhrzeit, der Wochentag, die Ferienzeiten, die
+Temperatur und der Niederschlag als vermutlich wichtigste Umstände ausgewählt.
+Die Faktoren wurden auf ihre Relevanz untersucht, indem ein Java-Programm 
+Berechnungen auf den unterschiedlichen Taxifahrten durchführte und folgende Visualisierungen erstellte.
+Dabei sind alle Visualisierungen so aufgebaut, dass
+die rechte/türkise Y-Achse immer die mediane Geschwindigkeit,
+die linke/orange Y-Achse die Menge der verfügbaren Fahrten und
+die X-Achse die Einteilung des jeweiligen Einflussfaktors enthält.</p>
+
+<img src="../media/Tageszeitdiagramm.png" alt="Tageszeitdiagramm">
+
+<p>Die Visualisierung der Tageszeit im Stundentakt zeigt, dass nachts, also von 00:00 bis circa
+7:00, die mediane Geschwindigkeit überdurchschnittlich hoch ist.
+Von 8:00 bis 12:00 ist die Anzahl an Taxifahrten erhöht, während die Geschwindigkeit stark
+absinkt. Am Nachmittag nimmt die Fahrtenmenge mit steigender Uhrzeit immer weiter ab. Die
+Geschwindigkeit pendelt sich dagegen verhältnismäßig stabil ein. Es gibt nur noch zwischen
+22:00 und 23:00 eine Spitze von beidem.</p>
+
+<img src="../media/Wochentagdiagramm.png" alt="Wochentagsdiagramm">
+
+</p>Bei den Wochentagen ist die Menge der Fahrten zum Wochenende hin stetig steigend, mit
+einem Höhepunkt am Freitag und einer Absenkung auf das Minimallevel von Samstag zu
+Sonntag. Die Geschwindigkeit bleibt von Montag bis Freitag relativ konstant und wird nur
+am Samstag und Sonntag spürbar erhöht.</p>
+
+<img src="../media/Feriendiagramm.png" alt="Feriendiagramm">
+
+<p>Bei dem Ferienzeitendiagramm ist die Menge an Fahrten pro Tag angegeben, da die
+Zeiträume sehr stark variieren. Die Fahrtmenge ist am Anfang des Jahres sehr stabil und
+macht einen großen Sprung ab Ende der Sommerferien auf ungefähr die doppelte Menge
+und bleibt dort bis zum Ende des Jahres. Unabhängig davon ist die Geschwindigkeit über alle
+Zeiträume verhältnismäßig stabil.</p>
+
+<img src="../media/Temperaturdiagramm.png" alt="Temperaturdiagramm">
+
+<p>In der Temperaturvisualisierung ist zu beachten, dass die Fahrtmengenskala logarithmisch
+ist, da es nur relativ wenige Fahrten mit Temperaturen unter -10°C und höher als +30°C in
+dem Datensatz gibt. Die Geschwindigkeit ist bei sehr niedrigen Temperaturen höher als bei
+den Restlichen und sinkt im Bereich von 0°C bis 30°C immer weiter ab.</p>
+
+<img src="../media/Niederschlagsdiagramm.png" alt="Niederschlagsdiagramm">
+
+<p>Auch beim Niederschlag ist die Fahrtmengenskala logarithmisch, da es sehr viele Fahrten
+ohne Niederschlag gibt. Demgegenüber gibt es nur wenige Routen mit Niederschlag im Datenbestand. Die mediane Geschwindigkeit
+verhält sich dabei so, dass sie mit steigender Niederschlagsmenge immer weiter abnimmt,
+mit Ausnahme der 8.1 – 12mm-Niederschlagskategorie, bei der sie leicht steigt.</p>
+
+<p>Nach diesen Analysen wurden Wichtungen für die einzelnen Faktoren errechnet, indem die
+maximale Differenz der jeweiligen X-Achsen-Werte verglichen wurden. Die Ferien wurden
+dabei nicht beachtet, da der Einfluss auf die Geschwindigkeit nur sehr gering beziehungsweise nicht
+existent zu sein scheint.</p>
+
+<table style="width:80%" align="center">
+	<tr>
+		<td></td>
+		<td>Tageszeit</td>
+		<td>Wochentag</td>
+		<td>Temperatur</td>
+		<td>Niederschlag</td>
+	</tr>
+	<tr>
+		<td>Differenz</td>
+		<td>13,35 km/h</td>
+		<td>5,59 km/h</td>
+		<td>7,98 km/h</td>
+		<td>5,42 km/h</td>
+	</tr>
+	<tr>
+		<td>Wichtung</td>
+		<td>41,3 %</td>
+		<td>17,3 %</td>
+		<td>24,7 %</td>
+		<td>16,7 %</td>
+	</tr>
+</table>
+
+<p>Nun wurde der eigentliche Routingalgorithmus in PostgreSQL umgesetzt. Dabei sind die
+zuvor ermittelten Wichtungen für die Reihenfolge der modularen Filter entscheidend. Je
+höher der Wichtungswert, desto früher wird er angewendet, um möglichst viele Fahrten für
+die wichtigsten Filter bereitzustellen.</p>
+
+<p>Zusätzlich wurde ein finaler Filter eingebaut, der sicherstellen soll, dass Fahrten mit
+überdurchschnittlichen hohen Zeiten oder langen Strecken aus dem Ergebnis entfernt
+werden. Dieser Filter erreicht dies durch eine Analyse der Durchschnittsgeschwindigkeit oder
+auch indem er Zeit und Distanz einzeln mit anderen Fahrten vergleicht. Diese beiden
+Varianten sind als unterschiedliche Modi im Filter definiert.</p>
+
+<p>Nachfolgend ein Beispiel für eine Routingabfrage vom Dresdner Hauptbahnhof zur
+Innenstadt. Als erstes wurde die Filterreihe ohne abschließenden Durchschnittfilter aufgerufen, um ein
+besseren Vergleich zu haben.</p>
+
+<img src="../media/keinMedianfilter-Ergebnisstabelle.png" alt="kein Medianfilter Ergebnisstabelle">
+
+<p>Als Ergebnis gab es 7 verschiedene Fahrten mit Distanzen von 2,2 - 4,6km und Fahrtzeiten
+von 6 - 24min. Es gab bei keiner Route Regen und die Temperatur liegt bei 7,5 - 20°C.
+Bei allen Fahrten wurden sämtliche Filter angewendet, weil die Spalte <em>filter_relevance</em> überall
+bei 100% liegt.</p>
+
+<img src="../media/keinFilter_visualisierung.png" alt="kein Filter Visualisierung">
+
+<p>Die nächste Abfrage erfolgte mit dem Durchschnittsfilter im Modus der
+Geschwindichkeitsfilterung.</p>
+
+<img src="../media/Steigungs-Ergebnisstabelle.png" alt="Steigungs-Ergebnisstabelle">
+
+<p>Von den 7 Fahrten sind noch 3 übriggeblieben. Die kürzesten Strecken sind nicht mehr dabei,
+weshalb die Distanzen jetzt von 3 - 4,6km reichen und die Fahrtdauer 6 - 10min beträgt.
+Das kommt daher, dass die längeren Fahrten in diesem Fall immer höhere
+Durchschnittsgeschwindigkeiten als die kürzeren hatten.</p>
+
+<img src="../media/Steigungsfilter_visualisierung.png" alt="Steigungsfilter Visualisierung">
+
+<p>Die letzte Abfrage wurde jetzt der Durchschnittsfilter auf das Vergleichen der einzelnen
+Werte angepasst.</p>
+
+<img src="../media/Kreuz-Ergebnisstabelle.png" alt="Kreuz-Ergebnisstabelle">
+
+<p>Diesmal sind von den 7 Fahrten nur zwei geblieben. Diese beiden Fahrten ähneln sich stark
+im jeweiligen Streckenverlauf, deshalb ist die Distanz bis auf wenige Meter gleich. Die
+Fahrtdauer weicht auch nur um 2min voneinander ab.</p>
+
+<img src="../media/Kreuzfilter_visualisierung.png" alt="Kreuzfilter Visualisierung">
+
+<p>Abschließend ist noch anzumerken, dass die Aussagekraft der Ergebnisse eingeschränkt ist, da 
+die Daten ausschließlich von Taxis erzeugt wurden und nicht zwangsläufig auf den
+allgemeinen Straßenverkehr übertragbar sind. Andererseits sind die Daten nur in Dresden und Umgebung aufgenommen worden und die Wichtungen
+an anderen Orten könnten verschieden sein. Eine weitere wichtige Einschränkung ist die Tatsache, dass nur 
+eine begrenzte Anzahl an Einflussfaktoren untersucht wurde. Es gibt weitere
+nicht mit einbezogene Faktoren, wie besondere Events in der Stadt Dresden. Dau zählen beispielsweise der Semperopernball und der Dresdner Striezelmarkt.
+Alles in allem kann der Routingalgorithmus eine zwar begründete Aussage treffen, aber er ist nicht in der
+Lage mit Sicherheit die effizienteste Route zu finden.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/MAGDa-BeuthHS">MAGDa-BeuthHS</a></p>
