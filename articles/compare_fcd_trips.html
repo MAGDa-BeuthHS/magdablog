@@ -46,12 +46,13 @@
 			<li>and stores the matched track back into a new table in the database.</li>
 		</ol>
 		<p>We simply called the programm FCD2pgSQL [7]. It can be found on our <a href="https://github.com/MAGDa-BeuthHS">GitHub page</a>.</p>
-		<h2>Map Matching and interpolating time and speed</h2></br>
+		<h2>Map Matching and interpolating time and speed</h2></br></br>
 		<p>Until now GraphHopper's MapMatching API returns the matched geometry, but drops the time information. Because we want to compare the duration of trips that went through the same corridor we had to come up with a way to transfer the time information to the matched tracks. We chose a two step strategy.</br>First step: Take the points of the original track and find possible counterparts in the matched track. We consider points in range of 50m as possible candidates. There can be more candidates for one point. The closest one is the winner, but it can also be the winner candidate for another node. Therefore, the minimal distance between a candidate node and all possible target nodes is taken to pick the best match. This frees the space for another node to become the best candidate unless the order of points is not mixed up. The time and the speed of the original GPS point is copied to the target node in the matched track.</p>
 		<img src="../media/candidate_matching.png" alt="Candidate map matching">
 		<p>Second: After the first step, the matched tracks can still have gaps (nodes) without time and speed information. If the gap is at the beginning or the end of the track and if it is not longer than 200m we simply copy the speed values. For gaps in between we calculate the speed using a linear equation. With the speed information at each point we can calculate the time the car needed to get from one point to another given a constant acceleration.</p>
 		<pre>
-			<small>Before:	
+			<small>
+Before:	
 {	
 lon, lat, 1396446450000, 7,	
 lon, lat, 0, 0,	
@@ -67,14 +68,16 @@ lon, lat, 1396446450006, 9,
 lon, lat, 1396446450020, 12,
 lon, lat, 1396446450039, 16,
 lon, lat, 1396446455000, 16
-}</small>
+}
+			</small>
 		</pre>
 		<p>When the matching process is complete we import the tracks into Postgres. To preserve both the temporal and the speed measure we set speed value as the Z value. We insert the tracks in batches to lower the traffic between our Java application and the database.</p>
 		<h2>Some PostGIS Magic</h2>
 		<p>Now, we are ready to compare different trips with each other. But taking the trips as a whole turned out to be not appropriate because their start and end positions are highly diverse. We wanted to be flexible and created a function that takes two arbitrary points and a buffer distance as an input and returns all trips that are intersecting both buffered points. In our example we choose Dresden main station as point A and the university as point B.</p>
 		<p>The trips are not returned as a whole. We use the PostGIS function <a href="http://postgis.net/docs/ST_LineSubstring.html">ST_LineSubstring</a> to cut out the segment in between the two points. This function requires two fraction values to know where to split the line. They can be determined with <a href="http://postgis.net/docs/ST_LineLocatePoint.html">ST_LineLocatePoint</a>. Our given points don't have to intersect with the trip geometry because PostGIS automatically uses the closest point on the linestring.</p>
 		<pre>
-			<small>SELECT
+			<small>
+SELECT
   CASE WHEN lr.start_fraction < lr.end_fraction
     THEN ST_LineSubstring(lr.geom, lr.start_fraction, lr.end_fraction)
     ELSE ST_LineSubstring(lr.geom, lr.end_fraction, lr.start_fraction)
@@ -94,7 +97,8 @@ FROM (
 		</pre>
 		<p>With ST_Length we calculate the length of the subset trips. To get the duration we can take the M values of the first and last point of each subset. They are already interpolated by ST_LineSubstring as well as the speed sitting at the Z position. Alternatively, there is the function <a href="http://postgis.net/docs/ST_InterpolatePoint.html">ST_InterpolatePoint</a> that can be applied against the whole trip. We've run the query against one year of FCD, which is nearly 2.3 mio trips and it just takes around 7 seconds.</p>
 		<pre>
-			<small>SELECT
+			<small>
+SELECT
   CASE WHEN lr.start_fraction < lr.end_fraction
     THEN round(ST_Length(ST_LineSubstring(lr.geom, lr.start_fraction, lr.end_fraction)::geography))::int
     ELSE round(ST_Length(ST_LineSubstring(lr.geom, lr.end_fraction, lr.start_fraction)::geography))::int
@@ -127,7 +131,8 @@ FROM (
     WHERE ST_Dwithin('SRID=4326;POINT(13.73 51.04)'::geometry, geom, 0.00143)
       AND ST_Dwithin('SRID=4326;POINT(13.736 51.029)'::geometry, geom, 0.00143)
 ) lr
-ORDER BY duration;</small>
+ORDER BY duration;
+</small>
 		</pre>
 		<img src="../media/table_distance_duration.png" alt="Comparison between distance and travel duration">
 		<p>From the results we can see some obvious patterns. Fast trips do not appear during rush hour periods on weekdays (around 7 o'clock in the morning and 6 o'clock in the evening). Only around 10% of the trips are happening in spring and summer months which is probably related to the weather conditions. Most trips between the main station and university lasted for around 5 minutes. The route distance is more or less the same. To get a sense what is a realistic duration we can try available routing engines. HERE and Google are including the traffic situation into their routing which produces a trip duration that is similar to our result. But a rather short duration like with got from GraphHopper or the OSRM is also possible.</p>
