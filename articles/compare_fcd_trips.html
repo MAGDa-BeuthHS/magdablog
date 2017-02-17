@@ -44,6 +44,7 @@
 			<li>performs the map matching,</li>
 			<li>and stores the matched track back into a new table in the database.</li>
 		</ol>
+		<p>We simply called the programm FCD2pgSQL [7]. It can be found on our <a href="https://github.com/MAGDa-BeuthHS">GitHub page</a>.</p>
 		<h2>Map Matching and interpolating time and speed</h2>
 		<p>Until now GraphHopper's MapMatching API returns the matched geometry, but drops the time information. Because we want to compare the duration of trips that went through the same corridor we had to come up with a way to transfer the time information to the matched tracks. We chose a two step strategy.</br>First step: Take the points of the original track and find possible counterparts in the matched track. We consider points in range of 50m as possible candidates. There can be more candidates for one point. The closest one is the winner, but it can also be the winner candidate for another node. Therefore, the minimal distance between a candidate node and all possible target nodes is taken to pick the best match. This frees the space for another node to become the best candidate unless the order of points is not mixed up. The time and the speed of the original GPS point is copied to the target node in the matched track.</p>
 		<img src="../media/candidate_matching.png" alt="Candidate map matching">
@@ -72,7 +73,7 @@ lon, lat, 1396446455000, 16
 		<p>When the matching process is complete we import the tracks into Postgres. To preserve both the temporal and the speed measure we set speed value as the Z value. We insert the tracks in batches to lower the traffic between our Java application and the database.</p>
 		<h2>Some PostGIS Magic</h2>
 		<p>Now, we are ready to compare different trips with each other. But taking the trips as a whole turned out to be not appropriate because their start and end positions are highly diverse. We wanted to be flexible and created a function that takes two arbitrary points and a buffer distance as an input and returns all trips that are intersecting both buffered points. In our example we choose Dresden main station as point A and the university as point B.</p>
-		<p>The trips are not returned as a whole. We use the PostGIS function ST_LineSubstring to cut out the segment in between the two points. This function requires two fraction values to know where to split the line. They can be determined with ST_LineLocatePoint. Our given points don't have to intersect with the trip geometry because PostGIS automatically uses the closest point on the linestring.</p>
+		<p>The trips are not returned as a whole. We use the PostGIS function <a href="http://postgis.net/docs/ST_LineSubstring.html">ST_LineSubstring</a> to cut out the segment in between the two points. This function requires two fraction values to know where to split the line. They can be determined with <a href="http://postgis.net/docs/ST_LineLocatePoint.html">ST_LineLocatePoint</a>. Our given points don't have to intersect with the trip geometry because PostGIS automatically uses the closest point on the linestring.</p>
 		<pre>
 			<small>
 SELECT
@@ -93,7 +94,7 @@ FROM (
       AND ST_Dwithin('SRID=4326;POINT(13.736 51.029)'::geometry, geom, 0.00143)
 ) lr;</small>
 		</pre>
-		<p>With ST_Length we calculate the length of the subset trips. To get the duration we can take the M values of the first and last point of each subset. They are already interpolated by ST_LineSubstring as well as the speed sitting at the Z position. Alternatively, there is the function ST_InterpolatePoint that can be applied against the whole trip. We've run the query against one year of FCD, which is nearly 2.3 mio trips and it just takes around 7 seconds.</p>
+		<p>With ST_Length we calculate the length of the subset trips. To get the duration we can take the M values of the first and last point of each subset. They are already interpolated by ST_LineSubstring as well as the speed sitting at the Z position. Alternatively, there is the function <a href="http://postgis.net/docs/ST_InterpolatePoint.html">ST_InterpolatePoint</a> that can be applied against the whole trip. We've run the query against one year of FCD, which is nearly 2.3 mio trips and it just takes around 7 seconds.</p>
 		<pre>
 			<small>
 SELECT
@@ -136,10 +137,10 @@ ORDER BY duration;
 		<p>From the results we can see some obvious patterns. Fast trips do not appear during rush hour periods on weekdays (around 7 o'clock in the morning and 6 o'clock in the evening). Only around 10% of the trips are happening in spring and summer months which is probably related to the weather conditions. Most trips between the main station and university lasted for around 5 minutes. The route distance is more or less the same. To get a sense what is a realistic duration we can try available routing engines. HERE and Google are including the traffic situation into their routing which produces a trip duration that is similar to our result. But a rather short duration like with got from GraphHopper or the OSRM is also possible.</p>
 		<table border=1>
 			<tr><th>Routing Engine</th><th>Distance</th><th>Duration</th></tr>
-			<tr><td>Graphhopper</td><td>1673 m</td><td>00:02:48</td></tr>
-			<tr><td>OSRM</td><td>1700 m</td><td>00:03:00</td></tr>
-			<tr><td>HERE Maps</td><td>1600 m</td><td>00:04:00</td></tr>
-			<tr><td>Google Maps</td><td>1700 m</td><td>00:05:00</td></tr>
+			<tr><td><a href="https://graphhopper.com/api/1/examples/">Graphhopper</a></td><td>1673 m</td><td>00:02:48</td></tr>
+			<tr><td><a href="http://map.project-osrm.org/?z=15&center=51.036348%2C13.738704&loc=51.04%2C13.73&loc=51.029%2C13.736&hl=en&alt=0">OSRM</a></td><td>1700 m</td><td>00:03:00</td></tr>
+			<tr><td><a href="https://wego.here.com/directions/mix/Bernhardstraße,-01069-Dresden,-Deutschland:51.04,13.73//Zellescher-Weg,-01069-Dresden,-Deutschland:51.029,13.736?map=51.03428,13.73669,15,normal">HERE Maps</a></td><td>1600 m</td><td>00:04:00</td></tr>
+			<tr><td><a href="https://www.google.de/maps/dir/51.029+13.736/51.04+13.73/">Google Maps</a></td><td>1700 m</td><td>00:05:00</td></tr>
 		</table>
 		<p>Generally more taxi trips are coming from the train station, which is reasonable as arriving passengers who do not know the city are more likely to take a taxi cab. We check the mean occupancy of 2014 detected at a group of sensors installed on the main road that connects the two given points. Sensors 493 and 494 are sitting on the lanes (left and right) with direction to the city centre, 491 and 492 are installed on the outgoing lanes (left and right). The curves for mean occupancy in figure ?? are as expected. In the morning hours more cars are coming from the suburban areas and they are heading back in the evening. Thus, trips from A to B should be faster in the morning whereas trips from B to A could be faster in the evening. However, we cannot see this correlation in the result set.</p>
 		<img src="../media/BelegPZS.png" alt="Occupancy of four sensors in the city of Dresden">
@@ -157,6 +158,8 @@ ORDER BY duration;
 <li> https://graphhopper.com/blog/2016/08/08/releasing-the-map-matching-api/</li>
 
 <li> https://github.com/bmwcarit/hmm-lib</li>
+
+<li> https://github.com/MAGDa-BeuthHS/fcd2pgsql</li>
         </ol>
       </section>
       <footer>
