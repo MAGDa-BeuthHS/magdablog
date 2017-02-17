@@ -91,9 +91,7 @@ FROM (
     FROM matched_tracks
     WHERE ST_Dwithin('SRID=4326;POINT(13.73 51.04)'::geometry, geom, 0.00143)
       AND ST_Dwithin('SRID=4326;POINT(13.736 51.029)'::geometry, geom, 0.00143)
-) lr;
-
-			</small>
+) lr;</small>
 		</pre>
 		<p>With ST_Length we calculate the length of the subset trips. To get the duration we can take the M values of the first and last point of each subset. They are already interpolated by ST_LineSubstring as well as the speed sitting at the Z position. Alternatively, there is the function ST_InterpolatePoint that can be applied against the whole trip. We've run the query against one year of FCD, which is nearly 2.3 mio trips and it just takes around 7 seconds.</p>
 		<pre>
@@ -132,7 +130,7 @@ FROM (
       AND ST_Dwithin('SRID=4326;POINT(13.736 51.029)'::geometry, geom, 0.00143)
 ) lr
 ORDER BY duration;
-			</small>
+</small>
 		</pre>
 		<img src="../media/table_distance_duration.png" alt="Comparison between distance and travel duration">
 		<p>From the results we can see some obvious patterns. Fast trips do not appear during rush hour periods on weekdays (around 7 o'clock in the morning and 6 o'clock in the evening). Only around 10% of the trips are happening in spring and summer months which is probably related to the weather conditions. Most trips between the main station and university lasted for around 5 minutes. The route distance is more or less the same. To get a sense what is a realistic duration we can try available routing engines. HERE and Google are including the traffic situation into their routing which produces a trip duration that is similar to our result. But a rather short duration like with got from GraphHopper or the OSRM is also possible.</p>
@@ -147,7 +145,7 @@ ORDER BY duration;
 		<img src="../media/BelegPZS.png" alt="Occupancy of four sensors in the city of Dresden">
 		<p>Another idea that came to our mind was to find out what kind of roads the taxis are taking at different times and locations. As we've done map matching, we should be able to find out, which streets were taken by a taxi. We will come back to this idea in our next blog post.</p>
 		<h2>Literatur</h2>
-		<ol type="[1]">
+		<ol type="1">
 		<li> https://tu-dresden.de/bu/verkehr/vis/vlp/forschung/forschungsprojekte/verkehrsmanagementsystem-vamos-dresden?set_language=en</br>
 
 <li> Quddus, M.A.; Ochieng, W.Y. & Noland, R.B. (2007). Current map-matching algorithms for transport applications: State-of-the art and future research directions. Transportation Research Part C 15 (5). 312–328.</li>
