@@ -138,7 +138,7 @@ ORDER BY duration;
 		<p>From the results we can see some obvious patterns. Fast trips do not appear during rush hour periods on weekdays (around 7 o'clock in the morning and 6 o'clock in the evening). Only around 10% of the trips are happening in spring and summer months which is probably related to the weather conditions. Most trips between the main station and university lasted for around 5 minutes. The route distance is more or less the same. To get a sense what is a realistic duration we can try available routing engines. HERE and Google are including the traffic situation into their routing which produces a trip duration that is similar to our result. But a rather short duration like with got from GraphHopper or the OSRM is also possible.</p>
 		<table border=1>
 			<tr><th>Routing Engine</th><th>Distance</th><th>Duration</th></tr>
-			<tr><td><a href="https://graphhopper.com/api/1/examples/">Graphhopper</a></td><td>1673 m</td><td>00:02:48</td></tr>
+			<tr><td><a href="https://graphhopper.com/maps/?point=51.04%2C13.73&point=51.029%2C13.736">Graphhopper</a></td><td>1680 m</td><td>00:03:00</td></tr>
 			<tr><td><a href="http://map.project-osrm.org/?z=15&center=51.036348%2C13.738704&loc=51.04%2C13.73&loc=51.029%2C13.736&hl=en&alt=0">OSRM</a></td><td>1700 m</td><td>00:03:00</td></tr>
 			<tr><td><a href="https://wego.here.com/directions/mix/Bernhardstraße,-01069-Dresden,-Deutschland:51.04,13.73//Zellescher-Weg,-01069-Dresden,-Deutschland:51.029,13.736?map=51.03428,13.73669,15,normal">HERE Maps</a></td><td>1600 m</td><td>00:04:00</td></tr>
 			<tr><td><a href="https://www.google.de/maps/dir/51.029+13.736/51.04+13.73/">Google Maps</a></td><td>1700 m</td><td>00:05:00</td></tr>
