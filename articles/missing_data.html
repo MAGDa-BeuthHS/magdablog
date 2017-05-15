@@ -1,0 +1,54 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Magdablog by MAGDa-BeuthHS</title>
+
+    <link rel="stylesheet" href="../stylesheets/styles.css">
+    <link rel="stylesheet" href="../stylesheets/github-light.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <a href="https://magda-beuthhs.github.io/magdablog/" alt="MAGDa Blog"><img src="../media/magda_logo.png" alt="MAGDa Logo" width="150"></a>
+        <p>MAGDa - Management und Analyse Geotemporaler Daten</p>
+
+        <p class="view"><a href="https://github.com/MAGDa-BeuthHS/magdablog">View the Project on GitHub <small>MAGDa-BeuthHS/magdablog</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/MAGDa-BeuthHS/magdablog/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/MAGDa-BeuthHS/magdablog/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/MAGDa-BeuthHS/magdablog">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>Bereinigung von Missing Data in Zeitreihen</h1>
+        <small>Posted am 15.05.2017</small>
+        <p>Um den Verkehrsfluss auf innerstädtischen Straßen zu steuern und auch während Stoßzeiten zu erhalten, werden in vielen Städten Verkehrsmanagementsysteme genutzt. Sie registrieren und analysieren den aktuellen Verkehr und ermitteln Prognosen. Dadurch können mithilfe gezielter Ampelschaltungen Stau und überfüllte Kreuzungen verhindern werden. Die Daten können außerdem in Anwendungen für den Individualverkehr genutzt werden, in denen beispielsweise Routingempfehlungen an die aktuelle Verkehrslage angepasst werden. Wartungsarbeiten oder Ausfälle der zur Verkehrszählung eingesetzten Sensoren führen jedoch dazu, dass die Daten nur unvollständig verfügbar sind (siehe Beispieldaten unten). Viele Datenanalyse- und -verarbeitungsmethoden wie z. B. Methoden zur Mustererkennung oder Verkehrsprognose sind jedoch auf lückenlose Datasets angewiesen.</p>
+		<img src="../media/missing_sensor_data.png" alt="Fehlenden Data in Messreihen von Sensoren">
+		<p>Um die vorhandenen Daten dennoch nutzen zu können, ohne lückenbehaftete Zeiträume zu entfernen, gibt es verschiedene Methoden, mit denen fehlende Werte geschätzt und in die Lücken eingesetzt werden können.</p>
+		<p>Zur Überprüfung der Genauigkeit dieser Methoden werden in vollständige Testsets künstlich Lücken eingefügt (siehe Abbildung unten). Diese Lücken werden durch die Anwendung einer Strategie bereinigt. Die dadurch entstandenen Schätzwerte werden mit den Orginalwerten des Testsets verglichen und somit der durchschnittliche Fehler berechnet.</p>
+		<img src="../media/test_scenario.png" alt="Testszenario zum Reparieren von fehlenden Daten">
+		<p>Dieser Vorgang wird für verschiedene Strategien und unterschiedliche Lückenlängen wiederholt. Die Ergebnisse sind im untenstehenden Diagramm dargestellt (NRMSE: Normalized Root Mean Square Error). Für kurze Lücken bis zu zwei Stunden eignet sich der Einsatz eines Basic Structural Models. Dabei wird die Zeitreihe anhand der Komponenten Trend, Saisonalität und Rest modelliert und die fehlenden Werte mit Hilfe eines Kalmanfilters errechnet. Diese Methode ist unter dem Namen na.kalman im R-Paket imputeTS enthalten. Für längere Lücken wird sie jedoch ungenau, sodass in diesem Fall das Einsetzen von Werten der Durchschnittswoche empfohlen wird. Dafür wird aus allen bekannten Daten eines Sensors der durchschnittliche Verlauf berechnet, wobei auch Feier- und Brückentage berücksichtigt werden sollten. Lücken werden daraufhin mit den entsprechenden Durchschnittswerten gefüllt. Die Methoden Weighted MA (Moving Average) und Lineare Interpolation liefern für kurze Lücken ebenfalls akzeptable Ergebnisse, können jedoch nicht gegenüber den beschriebenen Methoden beweisen.</p>
+		<img src="../media/imputation_diagramm.png" alt="Vergleich der Imputationsmethoden">
+		<p>Die gewonnenen Erkenntnisse werden genutzt, um ein Programm in Form eines R-Pakets zu implementieren. Ziel ist die vollständige Bereinigung der Daten aller Verkehrssensoren.</p>
+		<p>Der grobe Programmablauf ist in der untenstehenden Abbildung dargestellt. Unvollständige Datasets werden aus csv-Dateien eingelesen, vorverarbeitet und fehlende Werte bereinigt. Die Ergebnisse werden für die weitere Nutzung wieder in csv-Dateien zur Verfügung gestellt.</p>
+		<img src="../media/r_package.png" alt="R-Package Prozessablauf zum Reparieren von fehlenden Daten">
+		<p>Obwohl die damit erzeugten Datasets keine fehlenden Daten mehr aufweisen, muss bei der weiteren Verarbeitung berücksichtigt werden, dass es sich dabei nur um Schätzwerte handelt, die durchaus von den tatsächlichen Werten abweichen können. Außerdem sollte bei der Bereinigung besonders langer Lücken in Betracht gezogen werden, die Lücke als solche zu akzeptieren und das betroffene Dataset aus der weiteren Nutzung auszuschließen. Solche Fragen sind immer abhängig von der geplanten Nutzung der Daten zu klären und können nicht allgemein beantwortet werden.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/MAGDa-BeuthHS">MAGDa-BeuthHS</a></p>
+		<p><a href="../impressum.html">Impressum</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="../javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
