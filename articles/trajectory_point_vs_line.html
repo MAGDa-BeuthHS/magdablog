@@ -475,7 +475,7 @@
         "Execution time: 4029.248 ms"
         </pre>
 
-        OK, so the point query won by <strong>400 times</strong> in my case. I've tested Anita's query as well, but my trajectories could not fulfill the <code>ST_Within</code> criteria. So, I used <code>ST_Intersects</code>. It's important to do the JOIN with <code>&&</code> and not <code>ST_Intersects(ST_StartPoint(geom), areaA)</code> because a function is used to change the geom column. In this case the index wouldn't fire. With the data already fetched from heap it's sufficient to only check the topology, so I've used <code>_ST_Intersects</code> (note the leading underscore). 
+        <p>OK, so the point query won by <strong>400 times</strong> in my case. I've tested Anita's query as well, but my trajectories could not fulfill the <code>ST_Within</code> criteria. So, I used <code>ST_Intersects</code>. It's important to do the JOIN with <code>&&</code> and not <code>ST_Intersects(ST_StartPoint(geom), areaA)</code> because a function is used to change the geom column. In this case the index wouldn't fire. With the data already fetched from heap it's sufficient to only check the topology, so I've used <code>_ST_Intersects</code> (note the leading underscore).</p>
 
         <pre><code class="sql"> 
         WITH my AS ( 
