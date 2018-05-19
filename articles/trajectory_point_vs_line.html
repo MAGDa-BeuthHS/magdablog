@@ -29,7 +29,7 @@
       <section>
         <h1>Querying point or line-based trajectories in PostGIS. Which model is faster?</h1>
         <small>Posted am 19.05.2018</small>
-        <p>This post comments on one of the latest editions of Anita Graser's series 'Movement data in GIS' where she blogs about different ways to model, query and visualize trajectory-based data. In her <a href=https://anitagraser.com/2018/04/16/movement-data-in-gis-12-why-you-should-be-using-postgis-trajectories/" alt="Link to blog">12th episode</a> she demonstrate the difference in query performance when accessing properties of trajectories managed as points versus linestrings. The taken examples clearly show what are the benefits of the LineString-based approach. While I also store my tracking data as linestrings, I thought that the queries chosen for point-based data are not written in the best way. Therefore, I tried to create alternative queries to see if the performance gap is really this huge.</p>
+        <p>This post comments on one of the latest editions of Anita Graser's series <strong>Movement data in GIS</strong> where she blogs about different ways to model, query and visualize trajectory-based data. In her <a href=https://anitagraser.com/2018/04/16/movement-data-in-gis-12-why-you-should-be-using-postgis-trajectories/" alt="Link to blog">12th episode</a> she demonstrate the difference in query performance when accessing properties of trajectories managed as points versus linestrings. The taken examples clearly show what are the benefits of the LineString-based approach. While I also store my tracking data as linestrings, I thought that the queries chosen for point-based data are not written in the best way. Therefore, I tried to create alternative queries to see if the performance gap is really this huge.</p>
 
         <p><strong>TL;DR</strong> It is not. But, trajectories have indeed clear advantages over a point-based approach.</p>
         
@@ -455,7 +455,7 @@
         "Execution time: 99.698 ms"
         </pre>
 
-        <p>(It's the same speed with ST_Within(geom, ST_Buffer('SRID=4326;POINT(13.73 51.04)'::geometry(Point, 4326), 0.0005)) , btw.). Finally, let's try a spatial queries with my trajectories. I've created a simple spatial index on the geom column.</p>
+        <p>(It's the same speed with <code>ST_Within(geom, ST_Buffer('SRID=4326;POINT(13.73 51.04)'::geometry(Point, 4326), 0.0005))</code> , btw.). Finally, let's try a spatial queries with my trajectories. I've created a simple spatial index on the geom column.</p>
 
         <pre><code class="sql"> 
         SELECT
@@ -617,9 +617,7 @@
           FROM
             matched_tracks
         ) fcd;
-        </pre>
 
-        <pre><code class="sql"> 
         CREATE INDEX matched_tracks_segment_spx ON matched_tracks_segments USING GIST (fcd_segment_bbox);
         </code></pre>
 
