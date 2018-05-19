@@ -488,6 +488,7 @@
           WHERE _ST_Intersects(ST_StartPoint(geom), areaA)
         </code></pre>
 
+        <pre>
         "Nested Loop  (cost=0.42..318.23 rows=762 width=4) (actual time=5.168..2207.322 rows=515 loops=1)"
         "  CTE my"
         "    ->  Result  (cost=0.00..0.01 rows=1 width=32) (actual time=0.001..0.001 rows=1 loops=1)"
@@ -498,6 +499,7 @@
         "        Rows Removed by Filter: 106051"
         "Planning time: 1.014 ms"
         "Execution time: 2207.463 ms"
+        </pre>
 
         <p>It's a bit faster because the intersection test is reduced to a point. If I remove <code>ST_StartPoint</code> I'm back to 5 seconds. Conclusion: In Anita's case the trajectory query is actually a lot faster but only because of the query design.</p>
         
@@ -664,11 +666,11 @@
 
         <p>Wohoo! Even better than the point-based approach. So what's the result in the end?</p>
         <ul>
-            <li>Length:&emsp &emsp Trajectories are 50% faster &emsp Points 0, Trajectories 1</li>
-            <li>Duration: &emsp &emsp More or less the same &emsp Points 1, Trajectories 2</li>
-            <li>Temporal Filter: &emsp Trajectories are 30x faster &emsp  Points 1, Trajectories 3</li>
-            <li>Spatial Filter 1: &emsp Points are 400x faster &emsp Points 2, Trajectories 3</li>
-            <li>Spatial Filter 2: &emsp Trajectories are 30x faster &emsp Points 2, Trajectories 4</li>
+            <li>Length: Trajectories are 50% faster -> Points 0, Trajectories 1</li>
+            <li>Duration:  More or less the same -> Points 1, Trajectories 2</li>
+            <li>Temporal Filter: Trajectories are 30x faster -> Points 1, Trajectories 3</li>
+            <li>Spatial Filter 1: Points are 400x faster -> Points 2, Trajectories 3</li>
+            <li>Spatial Filter 2: Trajectories are 30x faster -> Points 2, Trajectories 4</li>
         </ul>
         
         <p>Thanks for reading! Hope you liked it and learned something new :) I encourage you to either try out some queries yourself or provide feedback if you spot some stupid mistakes that I made.</p>
