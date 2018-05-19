@@ -596,7 +596,7 @@
         ERROR: index expression cannot return a set
         </code></pre>
 
-        <p>Oh, that's why of course. Ok, so then I create a new materialized view and index it. As the view should only be used for spatiel look ups I store the segments as boxes. This also saves some disk space. Btw, I'm using <code>ST_Force2D</code> before segmentizing as I got the following error with some geometry: <code>ERROR: lwcollection_construct: mixed dimension geometries: 2/0</code>
+        <p>Oh, that's why of course. Ok, so then I create a new materialized view and index it. As the view should only be used for spatiel look ups I store the segments as boxes. This also saves some disk space. Btw, I'm using <code>ST_Force2D</code> before segmentizing as I got the following error with some geometry: <code>ERROR: lwcollection_construct: mixed dimension geometries: 2/0</code></p>
 
         <pre><code class="sql"> 
         CREATE MATERIALIZED VIEW matched_tracks_segments AS
