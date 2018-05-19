@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="stylesheets/styles.css">
     <link rel="stylesheet" href="stylesheets/github-light.css">
+    <link rel="stylesheet" href="stylesheets/default.css">
     <meta name="viewport" content="width=device-width">
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
@@ -27,19 +28,20 @@
       </header>
       <section>
         <h1>Die neuesten Beiträge aus dem MAGDa-Team findest du hier</h1>
-        		<h2>Querying point or line-based trajectories in PostGIS. Which model is faster?</h2>
-				<small>Posted on 19.05.2018</small>
-				        <p>This blog post compares the performance of different queries against a point-based storage for trajectories versus a linestring model with measure values. <a href="articles/trajectory_point_vs_line.html" alt="Blog post on querying trajectories either as points vs linestrings">More</a></p>
-				<h2>Text Klassifikation von Newsbeiträgen</h2>
-				<small>Posted am 19.12.2017</small>
-				        <p>Auch abseits der Verkehrsauswertung fallen große Mengen an Daten an. So zum Beispiel werden in sozialen Netzwerken, in Foren oder Blogs täglich Unmengen an Inhalten generiert. Um dieser Flut bei der Suche nach relevanten Texten Herr zu werden, wird überlicherweise auf Suchmaschinen zurückgegriffen. Aber wäre es nicht schöner, statt der händischen Suche, die Texte einfach ihrer Thematik zuzuordnen, und so alle zum Thema "Radsport" passenden Texte zu finden, unabhängig davon, wie oft das Wort "Fahrrad" auftaucht?</p>
+        <h2>Querying point or line-based trajectories in PostGIS. Which model is faster?</h2>
+		<small>Posted on 19.05.2018</small>
+		
+        <p>This blog post compares the performance of different queries against a point-based storage for movement data versus a trajectory model with measure values. While the trajectory model has some obvious advantages which also results in better performance, I wanted to see in which cases points are still a legitimate choice.<a href="articles/trajectory_point_vs_line.html" alt="Blog post on querying trajectories either as points vs linestrings">More</a></p>
+
+        <h2>Text Klassifikation von Newsbeiträgen</h2>
+		<small>Posted am 19.12.2017</small>
+        <p>Auch abseits der Verkehrsauswertung fallen große Mengen an Daten an. So zum Beispiel werden in sozialen Netzwerken, in Foren oder Blogs täglich Unmengen an Inhalten generiert. Um dieser Flut bei der Suche nach relevanten Texten Herr zu werden, wird überlicherweise auf Suchmaschinen zurückgegriffen. Aber wäre es nicht schöner, statt der händischen Suche, die Texte einfach ihrer Thematik zuzuordnen, und so alle zum Thema "Radsport" passenden Texte zu finden, unabhängig davon, wie oft das Wort "Fahrrad" auftaucht?</p>
 		<p>Mit dieser Fragestellung habe ich mich in meiner Masterarbeit auseinandergesetzt. Auf Basis von etwa 7.500 Nachrichtentexten von SpiegelOnline und der dort angegebenen Rubriken wurde versucht, eine Klassifikation zu entwickeln. Dabei stand zwar der Vergleich zweier Machine-Learning-Verfahren im Vordergrund, allerdings soll nachfolgend kurz beschrieben werden, wie man mit hierarchisch angeordneten Textklassen umgeht und wie man darauf Klassifikatoren ansetzt. <a href="articles/text_classification.html" alt="Artikel zum Thema Textklassifikation von Newsbeiträgen">Mehr erfahren</a></p>
-				<h2>Ein Stauatlas für Dresden</h2>
-				<small>Posted am 27.07.2017</small>
-			<p>Im Rahmen des Studienganges Medieninformatik an der Beuth Hochschule für Technik entwickelten die Studierenden Tom Schilling, Luise Napieralski, Alexander Hans, Jasmin Mayrowski und Romano Waschewski eine Webanwendung zur Verkehrsanalyse
-                    der Stadt Dresden.</p>
-			<p>Das Thema Stau, gerade im Zusammenhang mit dem Berufsverkehr, ist in vielen Städten ein großes Problem. Entscheidende Verkehrsknotenpunkte werden zu den Hauptverkehrszeiten hin stark belastet. Gerade Ortsdurchfahrten die zur Innenstadt
-                    führen oder Flussüberquerungen sind davon oft betroffen. Für Stadtplaner ist es daher eine wichtige Aufgabe, solche Knotenpunkte bei der Planung frühzeitig zu identifizieren und alternative Entlastungsstraßen einzuplanen. Um festzustellen,
+
+        <h2>Ein Stauatlas für Dresden</h2>
+		<small>Posted am 27.07.2017</small>
+		<p>Im Rahmen des Studienganges Medieninformatik an der Beuth Hochschule für Technik entwickelten die Studierenden Tom Schilling, Luise Napieralski, Alexander Hans, Jasmin Mayrowski und Romano Waschewski eine Webanwendung zur Verkehrsanalyse der Stadt Dresden.</p>
+		<p>Das Thema Stau, gerade im Zusammenhang mit dem Berufsverkehr, ist in vielen Städten ein großes Problem. Entscheidende Verkehrsknotenpunkte werden zu den Hauptverkehrszeiten hin stark belastet. Gerade Ortsdurchfahrten die zur Innenstadt führen oder Flussüberquerungen sind davon oft betroffen. Für Stadtplaner ist es daher eine wichtige Aufgabe, solche Knotenpunkte bei der Planung frühzeitig zu identifizieren und alternative Entlastungsstraßen einzuplanen. Um festzustellen,
                     an welchen Standorten dies genau Sinn macht, muss der Verkehr hinsichtlich der Verkehrsdichte und der gefahrenen Geschwindigkeiten analysiert werden. Ziel dieses Projektes ist es, einen Stauatlas von der Stadt Dresden für Stadtplaner,
                     -verwaltung und Einwohner zu entwickeln. Im Mittelpunkt steht die Auswertung der Sensordaten und deren Visualisierung, mit der sich ermitteln lässt, zu welchem Zeitpunkt, an welchen Stellen Verkehrsprobleme auftraten und wo Optimierungspotential
                     vorhanden ist. </p>
@@ -60,16 +62,16 @@
 		        <h2>Statistische Analyse und Visualisierung von Floating Car Data</h2>
 		        <small>Posted am 12.12.2016</small>
         <p>In diesem Blogeintrag wird das Thema einer Bachelorarbeit mit dem Titel "Statistische Analyse und Visualisierung von Floating Car Data"
-beleuchtet. Mit Hilfe der Floating Car Data (GPS- und Zeitdaten, die in diesem Fall von Taxis in Dresden
-generiert wurden) sollten Analysen erstellt werden, die den Einfluss von verschiedenen
-Faktoren auf den Dresdner Verkehr messen. Die daraus entstandenen Ergebnisse wurden für
-die Erstellung eines Routingalgorithmus verwendet, der basierend auf den
-historischen Daten die vermeintlich beste Route finden soll.</p>
+        beleuchtet. Mit Hilfe der Floating Car Data (GPS- und Zeitdaten, die in diesem Fall von Taxis in Dresden
+        generiert wurden) sollten Analysen erstellt werden, die den Einfluss von verschiedenen
+        Faktoren auf den Dresdner Verkehr messen. Die daraus entstandenen Ergebnisse wurden für
+        die Erstellung eines Routingalgorithmus verwendet, der basierend auf den
+        historischen Daten die vermeintlich beste Route finden soll.</p>
 
-<p>Als Einflussfaktoren wurden die Uhrzeit, der Wochentag, die Ferienzeiten, die
-Temperatur und der Niederschlag als vermutlich wichtigste Umstände ausgewählt.
-Die Faktoren wurden auf ihre Relevanz untersucht, indem ein Java-Programm 
-Berechnungen auf den unterschiedlichen Taxifahrten durchführte und folgende Visualisierungen erstellte. <a href="articles/fcd_routing.html" alt="Statistische Analyse und Visualisierung von Floating Car Data">Mehr erfahren</a></p>
+        <p>Als Einflussfaktoren wurden die Uhrzeit, der Wochentag, die Ferienzeiten, die
+        Temperatur und der Niederschlag als vermutlich wichtigste Umstände ausgewählt.
+        Die Faktoren wurden auf ihre Relevanz untersucht, indem ein Java-Programm 
+        Berechnungen auf den unterschiedlichen Taxifahrten durchführte und folgende Visualisierungen erstellte. <a href="articles/fcd_routing.html" alt="Statistische Analyse und Visualisierung von Floating Car Data">Mehr erfahren</a></p>
         <h2>ETL Pipeline am Beispiel einer Verkehrsdatenanalyse in Dresden</h2>
         <small>Posted am 22.11.2016</small>
           <p>Für die Stadt Dresden liegt ein umfangreicher Datenbestand in Form von Floating Car Data (FCD) vor. Die Floating Car Data umfassen die Positionsdaten und Geschwindigkeitsinformationen aller Taxen in Dresden. Diese Daten sind sehr umfangreich, da mehr als 500 Taxen in Dresden unterwegs sind, die alle 5 Sekunde einen Datensatz senden. Floating Car Data können als Anreicherung für stationäre Sensordaten dienen, denn es gibt selten Sensoren in weniger besiedelten Stadtgebieten, wohingegen Taxen das komplette Stadtgebiet abdecken. Häufig werden Floating Car Data für die Berechnung von Reisezeiten verwendet. Die errechneten Reisezeiten können in Verkehrsmanagementsysteme zur Planung von Lichtsignalanlagen, neuen Straßen und Ampelschaltungen dienen. Darüber hinaus lassen sich diese Daten für Navigationssystem benutzen, die den Verkehrsfluss in der Stadt besser kennen und darauf basierend Umfahrungen vorschlagen können. <a href="articles/heatmap_article.html" alt="Heatmap Webservice im ExCELL Projekt">Mehr erfahren</a></p>
