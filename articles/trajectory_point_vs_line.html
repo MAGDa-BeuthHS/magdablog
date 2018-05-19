@@ -247,7 +247,7 @@
         "  ->  CTE Scan on tmp  (cost=0.00..851.66 rows=42583 width=20) (actual time=30252.186..33126.235 rows=2289480 loops=1)"
         "Planning time: 3.924 ms"
         "Execution time: 35995.855 ms"
-        <pre>
+        </pre>
 
         <p>36 seconds. I tried some strange ideas (<code>DISTINCT ON</code>, <code>first_value</code>), but it was way slower. Btw. I received the plan after 30 seconds but when querying the actual data it took 5 minutes to get displayed :-O. Ok, time for trajectories again:</p>
         
