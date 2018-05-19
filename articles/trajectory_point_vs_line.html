@@ -615,12 +615,13 @@
           FROM
             matched_tracks
         ) fcd;
+        </pre>
 
         <pre><code class="sql"> 
         CREATE INDEX matched_tracks_segment_spx ON matched_tracks_segments USING GIST (fcd_segment_bbox);
         </code></pre>
 
-        <p>Now, my query needs some more tweeks. First do the look, then join the result with the trajectory table and check with _ST_DWithin, if it's really intersecting. Note that I use <code>_ST_DWithin</code> to avoid index calls, as I don't need them here.
+        <p>Now, my query needs some more tweeks. First do the look, then join the result with the trajectory table and check with _ST_DWithin, if it's really intersecting. Note that I use <code>_ST_DWithin</code> to avoid index calls, as I don't need them here.</p>
 
         <pre><code class="sql"> 
         WITH find_segments AS (
