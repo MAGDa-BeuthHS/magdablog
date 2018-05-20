@@ -652,7 +652,19 @@ WHERE
     <li>Spatial Filter 2: Trajectories are 30x faster -> Points 2, Trajectories 4</li>
 </ul>
 
-<p>Thanks for reading! Hope you liked it and learned something new :) I encourage you to either try out some queries yourself or provide feedback if you spot some stupid mistakes that I made.</p>
+<p>Thanks for reading! Hope you liked it and learned something new :) I encourage you to either try out some queries yourself or provide feedback if you spot some stupid mistakes that I made. Btw are some system parameters:</p>
+
+<ul>
+    <li>PostgreSQL 10.4 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-16), 64-bit</li>
+    <li>POSTGIS="2.4.4 r16526" PGSQL="100" GEOS="3.6.2-CAPI-1.10.2 4d2925d6" PROJ="Rel. 4.9.3, 15 August 2016"</li>
+    <li>shared_buffers: 2097152</li>
+    <li>effective_cache_size: 3145728</li>
+    <li>maintenance_work_mem: 2097152</li>
+    <li>work_mem: 32768</li>
+    <li>replacement_sort_tuples: 150000</li>
+    <li>random_page_cost: 1.1</li>
+    <li>seq_page_cost: 1</li>
+</ul>
 
       </section>
       <footer>
