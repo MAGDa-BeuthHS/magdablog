@@ -32,15 +32,13 @@
       <section>
 <h1>Querying point or line-based trajectories in PostGIS. Which model is faster?</h1>
 <small>Posted am 19.05.2018</small>
-<p>This post comments on one of the latest editions of Anita Graser's series <strong>Movement data in GIS</strong> where she blogs about different ways to model, query and visualize trajectory-based data. In her <a href=https://anitagraser.com/2018/04/16/movement-data-in-gis-12-why-you-should-be-using-postgis-trajectories/" alt="Link to blog">12th episode</a> she demonstrate the difference in query performance when accessing properties of trajectories managed as points versus linestrings. The taken examples clearly show what are the benefits of the LineString-based approach. While I also store my tracking data as linestrings, I thought that the queries chosen for point-based data are not written in the best way. Therefore, I tried to create alternative queries to see if the performance gap is really this huge.</p>
+<p>This post comments on one of the latest editions of Anita Graser's series <strong>Movement data in GIS</strong> where she blogs about different ways to model, query and visualize trajectory-based data. In her <a href=https://anitagraser.com/2018/04/16/movement-data-in-gis-12-why-you-should-be-using-postgis-trajectories/" alt="Link to blog">12th episode</a> she demonstrate performance differences when accessing properties of trajectories managed as points versus linestrings. The taken examples clearly show what are the benefits of the LineString-based approach. While I also store my tracking data as linestrings, I thought that the queries chosen for point-based data are not written in the best way. Therefore, I tried to create alternative queries to see if the performance gap is really this huge.</p>
 
 <p><strong>TL;DR</strong> It is not. But, trajectories have indeed clear advantages over a point-based approach.</p>
 
 <p>Generally, movement data is collected as a series of single locations connected by a sequence ID. When imported into a database, each detection is stored in a new table row. This works with most DBMS, especially when the longitude and latitude position is split up to separate columns and you don't need a geometry type. If one track is comprised of multiple rows in a database table properties such as the length of the track or the travel time etc. can not be queried so easily, e.g. for the length we would have to sum up the distances between all positions. Life gets easier when we choose a model that lets us represent each trajectory as one row in a table. For example, all points could make up a LineString. The temporal boundaries could be arranged as two columns. When using PostGIS, we have the ability to use the M dimension of a geometry, to store a unix timestamp along with each vertex.</p>
 
-<p>In my example, I use two tables that have a different layout than in Anita's example. I got a taxi data set from the city of Dresden which I have map matched with <a href="https://graphhopper.com/api/1/docs/map-matching/">Graphhopper</a> and processed with <a href="https://github.com/MAGDa-BeuthHS/fcd2pgsql">fcd2pgsql</a> - see also <a href="https://magda-beuthhs.github.io/magdablog/articles/compare_fcd_trips.html">this</a> blog entry. I have one table <code>matched_tracks</code> that only contains taxi trips with a passenger. The table contains over <strong>2 million</strong> rows (also because fcd2pgsql creates a new trip whenever there is a spatial of temporal gap in the original track).</p>
-
-<p>The <code>matched_tracks</code> table has four columns and a spatial index on the spatial column.</p>
+<p>In my example, I use two tables that have a different layout than in Anita's example. I got a taxi data set from the city of Dresden which I have map matched with <a href="https://graphhopper.com/api/1/docs/map-matching/">Graphhopper</a> and processed with <a href="https://github.com/MAGDa-BeuthHS/fcd2pgsql">fcd2pgsql</a> - see also <a href="https://magda-beuthhs.github.io/magdablog/articles/compare_fcd_trips.html">this</a> blog entry. I have one table <code>matched_tracks</code> that only contains taxi trips with a passenger. The table contains over <strong>2 million</strong> rows (also because fcd2pgsql creates a new trip whenever there is a spatial of temporal gap in the original track). The <code>matched_tracks</code> table has four columns and a spatial index on the spatial column.</p>
 
 <table border="1">
     <tr>
@@ -85,8 +83,8 @@
 <p>These are the indexes I've defined:</p>
 
 <pre><code class="sql">CREATE INDEX trip_idx ON fcd_matched USING btree (trip_id, idx);
-  CREATE INDEX fcd_matched_time_idx ON fcd_matched USING btree ("time");
-  CREATE INDEX fcd_matched_spx ON fcd_matched USING gist (geom);
+CREATE INDEX fcd_matched_time_idx ON fcd_matched USING btree ("time");
+CREATE INDEX fcd_matched_spx ON fcd_matched USING gist (geom);
 </code></pre>
 
 
@@ -134,7 +132,7 @@ SELECT trip_id, round(sum(ST_Length(traj::geography)))
 "Execution time: 1025397.352 ms"
 </pre>
 
-<p>It takes around 17 minutes. Also because the table is too big to sort in memory. I would need to extend the work_men up to gigabytes. We could move the <code>ORDER BY</code> into the <code>ST_MakeLine</code> function to reduce the amount of sorted rows.</p>
+<p>It takes around 17 minutes. Also because the table is too big to sort in memory (see <code>external merge</code>). I would need to extend the work_men up to gigabytes. We could move the <code>ORDER BY</code> into the <code>ST_MakeLine</code> function to reduce the amount of sorted rows.</p>
 
 <pre><code class="sql">SELECT
   trip_id,
@@ -213,7 +211,7 @@ trip_id |  idx | geom | lead(geom, 1)
 
 <h2>Calculate the duration</h2>
 
-<p>Ok, next query the duration of trips. Therefore, we only need to know the boundary of a track a.k.a. the first and the last point. So, with the aggregate functions <code>min</code> and <code>max</code> this should work properly. Don't know exactly, why there is a <code>sum</code>. Without it its 5 secs faster.</p>
+<p>Ok, next query the duration of trips. Therefore, we only need to know the boundary of a track a.k.a. the first and the last point. So, with the aggregate functions <code>min</code> and <code>max</code> this should work properly. Don't know exactly, why there is a <code>sum</code>. It's 5 seconds faster without it.</p>
 
 <pre><code class="sql">WITH tmp AS (
   SELECT trip_id, min(time) start_time, max(time) end_time
@@ -335,7 +333,7 @@ WHERE
 "Execution time: 17943.609 ms"
 </pre>
 
-<p>Way better. But, only 1702 tracks were found instead of 1755. Turned out that some tracks actually to have temporal shifts in it - probably due to different time zones on different servers. This should not happen when using trajectories. I created a functional index on the time range of the first and last measure values of each trajectory. I could have used the start_time and end_time columns, too. But, I wanted to try if it would work only with LineStringM data.</p>
+<p>Way better. But, only 1702 tracks were found instead of 1755. Turned out that some tracks actually to have temporal shifts in it - probably due to different time zones on different servers. I created a functional index on the time range of the first and last measure values of each trajectory. I could have used the start_time and end_time columns, too. But, I wanted to try if it would work only with LineStringM data.</p>
 
 <pre><code class="sql">CREATE INDEX matched_tracks_time_range_idx ON matched_tracks USING GIST (int8range(ST_M(ST_StartPoint(geom))::bigint, ST_M(ST_EndPoint(geom))::bigint)</code></pre>
 
@@ -377,7 +375,7 @@ SELECT distinct traj.trip_id
     ON ST_Within(traj.geom, my.areaA);
 </code></pre>
 
-<p>There are a lot of extra steps in the query, which I think are not necessary. It also results in a giant execution plan.</p>
+<p>There are a lot of extra steps in the query, which are not necessary. It also results in a giant execution plan.</p>
 
 <pre>
 "Unique  (cost=3188783.06..3188783.06 rows=1 width=4) (actual time=32451.398..32451.492 rows=515 loops=1)"
@@ -415,7 +413,7 @@ SELECT distinct traj.trip_id
 "Execution time: 32515.354 ms"
 </pre>
 
-<p>Why not using <code>ST_DWithin</code> instead of <code>ST_Buffer</code> and <code>ST_Within</code>. Yes, I <a href="https://trac.osgeo.org/postgis/ticket/2614">know</a> that it can be faster sometimes. The <code>tmp</code> CTE could be removed as well because <code>DISTINCT</code> is also used in the final query. So I came up with the following:</p>
+<p>Why not use <code>ST_DWithin</code> instead of <code>ST_Buffer</code> and <code>ST_Within</code>? Yes, I <a href="https://trac.osgeo.org/postgis/ticket/2614">know</a> that it can be faster sometimes. The <code>tmp</code> CTE could be removed as well because <code>DISTINCT</code> is also used in the final query. I came up with the following:</p>
 
 <pre><code class="sql">SELECT
   DISTINCT trip_id
@@ -443,7 +441,7 @@ WHERE
 "Execution time: 99.698 ms"
 </pre>
 
-<p>(It's the same speed with <code>ST_Within(geom, ST_Buffer('SRID=4326;POINT(13.73 51.04)'::geometry(Point, 4326), 0.0005))</code> , btw.). Finally, let's try a spatial queries with my trajectories. I've created a simple spatial index on the geom column.</p>
+<p>Btw: It's the same speed with <code>ST_Within(geom, ST_Buffer('SRID=4326;POINT(13.73 51.04)'::geometry(Point, 4326), 0.0005))</code>. Finally, let's try a spatial queries with my trajectories. I've created a simple spatial index on the geom column.</p>
 
 <pre><code class="sql">SELECT
   id
@@ -487,12 +485,12 @@ SELECT id
 "Execution time: 2207.463 ms"
 </pre>
 
-<p>It's a bit faster because the intersection test is reduced to a point. If I remove <code>ST_StartPoint</code> I'm back to 5 seconds. Conclusion: In Anita's case the trajectory query is actually a lot faster but only because of the query design.</p>
+<p>It's a bit faster because the intersection test is reduced to a point. If I remove <code>ST_StartPoint</code> I'm back to 5 seconds. Conclusion: In Anita's case the trajectory query is in fact a lot faster. But, as said, I think this is only because of the query design.</p>
 
 
 <h2>Epilogue</h2>
 
-<p>I got one more test: For my use case I need to check the intersection of two specific points. This is something where trajectories can become in handy, because I can choose arbitrary points on a road even when there is no tracked point nearby. I don't need to play with different buffer radii because the linestring of a searched trajectory will intersect with my query point. Anyway, to also test the point-based approach, I choose two points where I know I could find interecting points:</p>
+<p>I got one more test: For my use case I need to check the intersection of two specific points. This is something where trajectories can become in handy, because I can choose arbitrary points on a road even when there is no tracked point nearby. I don't need to play with different buffer radii because the linestring of a searched trajectory will intersect with my query point. Anyway, to also test the point-based approach, I choose two points where I will find interecting points:</p>
 
 <pre><code class="sql">SELECT
   p1.trip_id
@@ -565,12 +563,11 @@ WHERE
 "Execution time: 5888.900 ms"
 </pre>
 
-<p>Nearly 6 seconds. How can I make it faster? Maybe by breaking the linestrings into smaller parts with <a href="https://postgis.net/docs/ST_Subdivide.html">ST_SubDivide</a>
-Think about how the spatial index for linestrings would look like when some of them span the whole city. Not really an selective index.</p>
+<p>Nearly 6 seconds. How can I make it faster? Maybe by breaking the linestrings into smaller parts with <a href="https://postgis.net/docs/ST_Subdivide.html">ST_SubDivide</a>. Think about how the spatial index for linestrings would look like when some of them span the whole city. Remember that the R-tree index in PostGIS only stores the bounding boxes of the lines (see the image below). If I put my finger in the city center it would intersect with a lot of boxes. Thus, many disk reads will fetch the line geometries just to find out, that they are actually not intersecting with my finger point. The spatial index is not very selective. What to do about it?</p>
 
 <img src="../media/bbox_problem.png" alt="Not so clever spatial index structure">
 
-<p>Why not create a functional index, where we <code>ST_SubDivide</code> along with <code>ST_Segmentize</code> to produce more vertices? So that the index looks like this:</p>
+<p>At first, I thought: Why not create a functional index, where I use <code>ST_SubDivide</code> along with <code>ST_Segmentize</code> to produce more vertices? So that the index looks like this:</p>
 
 <img src="../media/bbox_problem_solved.png" alt="Good spatial index structure">
 
@@ -579,7 +576,7 @@ Think about how the spatial index for linestrings would look like when some of t
 ERROR: index expression cannot return a set
 </code></pre>
 
-<p>Oh, that's why of course. Ok, so then I create a new materialized view and index it. As the view should only be used for spatiel look ups I store the segments as boxes. This also saves some disk space. Btw, I'm using <code>ST_Force2D</code> before segmentizing as I got the following error with some geometry: <code>ERROR: lwcollection_construct: mixed dimension geometries: 2/0</code></p>
+<p>Oh, that's why, of course. Ok, so then I create a new materialized view and index it. As the view should only be used for spatial lookups I store the segments as boxes. This also saves some disk space. Btw, I'm using <code>ST_Force2D</code> before segmentizing as I got the following error with some geometries: <code>ERROR: lwcollection_construct: mixed dimension geometries: 2/0</code></p>
 
 <pre><code class="sql">CREATE MATERIALIZED VIEW matched_tracks_segments AS
 SELECT
@@ -603,7 +600,7 @@ FROM (
 CREATE INDEX matched_tracks_segment_spx ON matched_tracks_segments USING GIST (fcd_segment_bbox);
 </code></pre>
 
-<p>Now, my query needs some more tweeks. First do the look, then join the result with the trajectory table and check with _ST_DWithin, if it's really intersecting. Note that I use <code>_ST_DWithin</code> to avoid index calls, as I don't need them here.</p>
+<p>Now, my query needs some more tweeks. First, do the spatial search on the segments, then join the result with the trajectory table and check with _ST_DWithin, if it's really intersecting. Note that I use <code>_ST_DWithin</code> to avoid index calls, as I don't need them here.</p>
 
 <pre><code class="sql">WITH find_segments AS (
   SELECT DISTINCT
@@ -643,7 +640,7 @@ WHERE
 "Execution time: 13.120 ms"
 </pre>
 
-<p>Wohoo! Even better than the point-based approach. So what's the result in the end?</p>
+<p>Wohoo! Even better than the point-based approach. So what are the results in the end?</p>
 <ul>
     <li>Length: Trajectories are 50% faster -> Points 0, Trajectories 1</li>
     <li>Duration:  More or less the same -> Points 1, Trajectories 2</li>
@@ -652,11 +649,10 @@ WHERE
     <li>Spatial Filter 2: Trajectories are 30x faster -> Points 2, Trajectories 4</li>
 </ul>
 
-<p>Thanks for reading! Hope you liked it and learned something new :) I encourage you to either try out some queries yourself or provide feedback if you spot some stupid mistakes that I made. Btw here are some system parameters:</p>
-
+<p>Thanks for reading! Hope you liked it and learned something new :) I encourage you to either try out some queries yourself or provide feedback if you spot some stupid mistakes that I've made. Btw, here are some system parameters:</p>
 <ul>
-    <li>PostgreSQL 10.4 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-16), 64-bit</li>
-    <li>POSTGIS="2.4.4 r16526" PGSQL="100" GEOS="3.6.2-CAPI-1.10.2 4d2925d6" PROJ="Rel. 4.9.3, 15 August 2016"</li>
+    <li><strong>PostgreSQL 10.4</strong> on x86_64-pc-linux-gnu, compiled by gcc (GCC) 4.8.5 20150623 (Red Hat 4.8.5-16), 64-bit</li>
+    <li><strong>POSTGIS="2.4.4 r16526"</strong> PGSQL="100" GEOS="3.6.2-CAPI-1.10.2 4d2925d6" PROJ="Rel. 4.9.3, 15 August 2016"</li>
     <li>shared_buffers: 2097152</li>
     <li>effective_cache_size: 3145728</li>
     <li>maintenance_work_mem: 2097152</li>
@@ -665,7 +661,6 @@ WHERE
     <li>random_page_cost: 1.1</li>
     <li>seq_page_cost: 1</li>
 </ul>
-
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/MAGDa-BeuthHS">MAGDa-BeuthHS</a></p>
