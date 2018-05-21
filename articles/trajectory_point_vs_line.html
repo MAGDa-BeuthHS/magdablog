@@ -129,7 +129,7 @@ SELECT trip_id, round(sum(ST_Length(traj::geography)))
 "        Sort Method: external merge  Disk: 2898688kB"
 "        ->  CTE Scan on tmp  (cost=0.00..4.00 rows=200 width=36) (actual time=616145.993..689409.554 rows=2289480 loops=1)"
 "Planning time: 0.440 ms"
-"Execution time: 1025397.352 ms"
+<strong>"Execution time: 1025397.352 ms"</strong>
 </pre>
 
 <p>It takes around 17 minutes. Also because the table is too big to sort in memory (see <code>external merge</code>). I would need to extend the work_men up to gigabytes. We could move the <code>ORDER BY</code> into the <code>ST_MakeLine</code> function to reduce the amount of sorted rows.</p>
@@ -148,7 +148,7 @@ GROUP BY
 "  Group Key: trip_id"
 "  ->  Index Scan using trip_idx on fcd_matched  (cost=0.57..5684440.54 rows=178012704 width=44) (actual time=0.068..137149.383 rows=178012704 loops=1)"
 "Planning time: 0.182 ms"
-"Execution time: 602404.807 ms"
+<strong>"Execution time: 602404.807 ms"</strong>
 </pre>
 
 <p>10 minutes. Not exactly sure how much time is spent on putting the linestring together. When I use a simple <code>count()</code> instead it takes 24 seconds to run the query. I wonder if creating a line is really necessary. It's also possible to calculate the length from a set of points using a window function.</p>
@@ -193,7 +193,7 @@ trip_id |  idx | geom | lead(geom, 1)
 "        ->  WindowAgg  (cost=0.57..54192902.38 rows=178012704 width=16) (actual time=5.894..1125864.122 rows=178012704 loops=1)"
 "              ->  Index Scan using trip_idx on fcd_matched  (cost=0.57..5684440.54 rows=178012704 width=40) (actual time=3.881..182993.321 rows=178012704 loops=1)"
 "Planning time: 2.757 ms"
-"Execution time: 1258156.701 ms"
+<strong>"Execution time: 1258156.701 ms"</strong>
 </pre>
 
 <p>Over 20 minutes! Didn't know that a window with partitioning can be this expensive. Hm, did I get something totally wrong? Let's check how much faster it is with trajectories:</p>
@@ -203,7 +203,7 @@ trip_id |  idx | geom | lead(geom, 1)
 <pre>
 "Seq Scan on matched_tracks  (cost=0.00..1116915.36 rows=2289129 width=8) (actual time=3.772..353470.769 rows=2289480 loops=1)"
 "Planning time: 1.020 ms"
-"Execution time: 353904.919 ms"
+<strong>"Execution time: 353904.919 ms"</strong>
 </pre>
 
 <p>Result: Trajectories win! Nearly 6 minutes compared to 10 or 20.</p>
@@ -240,7 +240,7 @@ SELECT trip_id, sum(end_time - start_time)
 "                            ->  Parallel Seq Scan on fcd_matched  (cost=0.00..2729528.44 rows=35602544 width=12) (actual time=0.221..19064.374 rows=29668784 loops=6)"
 "  ->  CTE Scan on tmp  (cost=0.00..851.66 rows=42583 width=20) (actual time=30252.186..33126.235 rows=2289480 loops=1)"
 "Planning time: 3.924 ms"
-"Execution time: 35995.855 ms"
+<strong>"Execution time: 35995.855 ms"</strong>
 </pre>
 
 <p>36 seconds. I tried some strange ideas (<code>DISTINCT ON</code>, <code>first_value</code>), but it was way slower. Btw. I received the plan after 30 seconds but when querying the actual data it took 5 minutes to get displayed :-O. Ok, time for trajectories again:</p>
@@ -255,7 +255,7 @@ FROM
 <pre>
 "Seq Scan on matched_tracks  (cost=0.00..567524.40 rows=2289129 width=12) (actual time=0.208..27842.437 rows=2289480 loops=1)"
 "Planning time: 0.306 ms"
-"Execution time: 27993.038 ms"
+<strong>"Execution time: 27993.038 ms"</strong>
 </pre>
 
 <p>More or less comparable performance. The actual query took over 3 minutes to present the results.</p>
@@ -297,7 +297,7 @@ SELECT trip_id, start_time, end_time
 "        Filter: ((end_time > '1416999600'::bigint) AND (start_time < '1417014000'::bigint))"
 "        Rows Removed by Filter: 2287725"
 "Planning time: 0.836 ms"
-"Execution time: 31472.068 ms"
+<strong>"Execution time: 31472.068 ms"</strong>
 </pre>        
 
 <p>Half a minute. The index on the time column is of no use because of the preceeding CTE which groups and sorts the entire <code>fcd_matched</code> table. We need to do the temporal filter first and then eliminate the trips which do not overlap with the given time window. One important note: In my database the time is stored as <code>bigint</code> that refers to a unix timestamp. So, in order to use the index that I've created on my <code>time</code> column, I have to be careful and convert the passed timestamps in the <code>WHERE</code> clause. Look at the second plan to see what happens otherwise.</p>
@@ -317,7 +317,7 @@ WHERE
 "  ->  Index Scan using fcd_matched_time_idx on fcd_matched  (cost=0.57..122105.65 rows=112159 width=4) (actual time=0.059..109.897 rows=144178 loops=1)"
 "        Index Cond: (("time" > '1416999600'::bigint) AND ("time" < '1417014000'::bigint))"
 "Planning time: 0.297 ms"
-"Execution time: 147.727 ms"
+<strong>"Execution time: 147.727 ms"</strong>
 </pre>
 
 <pre>
@@ -330,7 +330,7 @@ WHERE
 "              Filter: <b>((("time")::double precision</b> > '1416999600'::double precision) AND <b>(("time")::double precision</b> < '1417014000'::double precision))"
 "              Rows Removed by Filter: 29644754"
 "Planning time: 1.123 ms"
-"Execution time: 17943.609 ms"
+<strong>"Execution time: 17943.609 ms"</strong>
 </pre>
 
 <p>Way better. But, only 1702 tracks were found instead of 1755. Turned out that some tracks actually to have temporal shifts in it - probably due to different time zones on different servers. I created a functional index on the time range of the first and last measure values of each trajectory. I could have used the start_time and end_time columns, too. But, I wanted to try if it would work only with LineStringM data.</p>
@@ -350,7 +350,7 @@ WHERE
 "Index Scan using matched_tracks_time_range_idx on matched_tracks  (cost=0.41..25251.17 rows=22895 width=4) (actual time=0.189..4.681 rows=1374 loops=1)"
 "  Index Cond: (int8range((st_m(st_startpoint(geom)))::bigint, (st_m(st_endpoint(geom)))::bigint) && '[1416999600,1417014000)'::int8range)"
 "Planning time: 0.227 ms"
-"Execution time: 4.844 ms"
+<strong>"Execution time: 4.844 ms"</strong>
 </pre>
 
 <p>Works pretty good! But, for some reason only 1347 entries are found. Again, I found some temporal shifts, this time backwards :-/</p>
@@ -410,7 +410,7 @@ SELECT distinct traj.trip_id
 "                                ->  Bitmap Index Scan on fcd_matched_spx  (cost=0.00..2753.55 rows=178013 width=0) (actual time=84.057..84.057 rows=24161 loops=1)"
 "                                      Index Cond: (my.areaa ~ geom)"
 "Planning time: 145.486 ms"
-"Execution time: 32515.354 ms"
+<strong>"Execution time: 32515.354 ms"</strong>
 </pre>
 
 <p>Why not use <code>ST_DWithin</code> instead of <code>ST_Buffer</code> and <code>ST_Within</code>? Yes, I <a href="https://trac.osgeo.org/postgis/ticket/2614">know</a> that it can be faster sometimes. The <code>tmp</code> CTE could be removed as well because <code>DISTINCT</code> is also used in the final query. I came up with the following:</p>
@@ -438,7 +438,7 @@ WHERE
 "                    ->  Bitmap Index Scan on fcd_matched_spx  (cost=0.00..472.61 rows=30528 width=0) (actual time=11.218..11.218 rows=24161 loops=1)"
 "                          Index Cond: (geom && '0103000020E610000001000000050000002FDD240681752B40931804560E8549402FDD240681752B4077BE9F1A2F854940BD74931804762B4077BE9F1A2F854940BD74931804762B40931804560E8549402FDD240681752B40931804560E854940'::geometry)"
 "Planning time: 0.562 ms"
-"Execution time: 99.698 ms"
+<strong>"Execution time: 99.698 ms"</strong>
 </pre>
 
 <p>Btw: It's the same speed with <code>ST_Within(geom, ST_Buffer('SRID=4326;POINT(13.73 51.04)'::geometry(Point, 4326), 0.0005))</code>. Finally, let's try a spatial queries with my trajectories. I've created a simple spatial index on the geom column.</p>
@@ -457,7 +457,7 @@ WHERE
 "  Filter: (('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326) && st_expand(geom, '0.0005'::double precision)) AND _st_dwithin('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326), geom, '0.0005'::double precision))"
 "  Rows Removed by Filter: 94333"
 "Planning time: 0.470 ms"
-"Execution time: 4029.248 ms"
+<strong>"Execution time: 4029.248 ms"</strong>
 </pre>
 
 <p>OK, so the point query won by <strong>400 times</strong> in my case. I've tested Anita's query as well, but my trajectories could not fulfill the <code>ST_Within</code> criteria. So, I used <code>ST_Intersects</code>. It's important to do the JOIN with <code>&&</code> and not <code>ST_Intersects(ST_StartPoint(geom), areaA)</code> because a function is used to change the geom column. In this case the index wouldn't fire. With the data already fetched from heap it's sufficient to only check the topology, so I've used <code>_ST_Intersects</code> (note the leading underscore).</p>
@@ -482,7 +482,7 @@ SELECT id
 "        Filter: _st_intersects(st_startpoint(geom), my.areaa)"
 "        Rows Removed by Filter: 106051"
 "Planning time: 1.014 ms"
-"Execution time: 2207.463 ms"
+<strong>"Execution time: 2207.463 ms"</strong>
 </pre>
 
 <p>It's a bit faster because the intersection test is reduced to a point. If I remove <code>ST_StartPoint</code> I'm back to 5 seconds. Conclusion: In Anita's case the trajectory query is in fact a lot faster. But, as said, I think this is only because of the query design.</p>
@@ -540,7 +540,7 @@ WHERE p1.trip_id = p2.trip_id;
 "                          ->  Bitmap Index Scan on fcd_matched_spx  (cost=0.00..2753.55 rows=178013 width=0) (actual time=41.052..41.052 rows=195297 loops=1)"
 "                                Index Cond: ('0103000020E6100000010000002100000057EC831343772B4098E231FB06854940B85425D141772B40373FEDC80385494039016D163E772B40AFAD1AB6008549406E6B0B0838772B40C8E3F6E0FD8449408E2095E12F772B4098C25F65FB844940D09B38F325772B40E02FC25BF98449403574A99E1A772B406ECA29D8F7844940162E5F530E772B408EB57BE9F684494090A04C8A01772B40A60FE498F68449400A133AC1F4762B408EB57BE9F6844940EBCCEF75E8762B406ECA29D8F784494050A56021DD762B40E02FC25BF984494092200433D3762B4098C25F65FB844940B2D58D0CCB762B40C8E3F6E0FD844940E73F2CFEC4762B40AFAD1AB60085494068EC7343C1762B40373FEDC803854940C9541501C0762B4098E231FB0685494068EC7343C1762B40F985762D0A854940E73F2CFEC4762B40811749400D854940B2D58D0CCB762B4068E16C151085494092200433D3762B40980204911285494050A56021DD762B405095A19A14854940EBCCEF75E8762B40C2FA391E168549400A133AC1F4762B40A20FE80C1785494090A04C8A01772B408AB57F5D17854940162E5F530E772B40A20FE80C178549403574A99E1A772B40C2FA391E16854940D09B38F325772B405095A19A148549408E2095E12F772B4098020491128549406E6B0B0838772B4068E16C151085494039016D163E772B40811749400D854940B85425D141772B40F985762D0A85494057EC831343772B4098E231FB06854940'::geometry ~ geom)"
 "Planning time: 1.531 ms"
-"Execution time: 561.722 ms"
+<strong>"Execution time: 561.722 ms"</strong>
 </pre>
 
 <p>Still ok, I think. The linestring query can be kept a bit simpler:</p>
@@ -560,7 +560,7 @@ WHERE
 "  Filter: (('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326) && st_expand(geom, '0.0005'::double precision)) AND ('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326) && st_expand(geom, '0.0005'::double precision)) AND _st_dwithin('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326), geom, '0.0005'::double precision) AND _st_dwithin('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326), geom, '0.0005'::double precision))"
 "  Rows Removed by Filter: 86268"
 "Planning time: 0.536 ms"
-"Execution time: 5888.900 ms"
+<strong>"Execution time: 5888.900 ms"</strong>
 </pre>
 
 <p>Nearly 6 seconds. How can I make it faster? Maybe by breaking the linestrings into smaller parts with <a href="https://postgis.net/docs/ST_Subdivide.html">ST_SubDivide</a>. Think about how the spatial index for linestrings would look like when some of them span the whole city. Remember that the R-tree index in PostGIS only stores the bounding boxes of the lines (see the image below). If I put my finger in the city center it would intersect with a lot of boxes. Thus, many disk reads will fetch the line geometries just to find out, that they are actually not intersecting with my finger point. The spatial index is not very selective. What to do about it?</p>
@@ -637,7 +637,7 @@ WHERE
 "        Index Cond: (id = s.trip_id)"
 "        Filter: (_st_dwithin('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326), geom, '0.0005'::double precision) AND _st_dwithin('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326), geom, '0.0005'::double precision))"
 "Planning time: 0.534 ms"
-"Execution time: 13.120 ms"
+<strong>"Execution time: 13.120 ms"</strong>
 </pre>
 
 <p>Wohoo! Even better than the point-based approach. So what are the results in the end?</p>
