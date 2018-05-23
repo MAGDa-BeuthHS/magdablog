@@ -624,21 +624,20 @@ WHERE
 </code></pre>
 
 <pre>
-"Nested Loop  (cost=3.09..5.83 rows=1 width=4) (actual time=15.125..18.316 rows=1 loops=1)"
+"Nested Loop  (cost=3.09..5.83 rows=1 width=4) (actual time=2.996..21.911 rows=469 loops=1)"
 "  CTE find_segments"
-"    ->  Unique  (cost=2.65..2.66 rows=1 width=4) (actual time=2.954..3.369 rows=469 loops=1)"
-"          ->  Sort  (cost=2.65..2.65 rows=1 width=4) (actual time=2.953..3.061 rows=469 loops=1)"
+"    ->  Unique  (cost=2.65..2.66 rows=1 width=4) (actual time=2.942..3.319 rows=469 loops=1)"
+"          ->  Sort  (cost=2.65..2.65 rows=1 width=4) (actual time=2.940..3.054 rows=469 loops=1)"
 "                Sort Key: matched_tracks_segments.trip_id"
 "                Sort Method: quicksort  Memory: 46kB"
-"                ->  Index Scan using matched_tracks_segment_spx on matched_tracks_segments  (cost=0.42..2.64 rows=1 width=4) (actual time=0.356..2.645 rows=469 loops=1)"
+"                ->  Index Scan using matched_tracks_segment_spx on matched_tracks_segments  (cost=0.42..2.64 rows=1 width=4) (actual time=0.308..2.697 rows=469 loops=1)"
 "                      Index Cond: (('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326) && fcd_segment_bbox) AND ('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326) && fcd_segment_bbox))"
-"  ->  CTE Scan on find_segments s  (cost=0.00..0.02 rows=1 width=4) (actual time=2.957..3.646 rows=469 loops=1)"
-"  ->  Index Scan using matched_tracks_pkey on matched_tracks t  (cost=0.43..3.15 rows=1 width=4) (actual time=0.030..0.030 rows=0 loops=469)"
+"  ->  CTE Scan on find_segments s  (cost=0.00..0.02 rows=1 width=4) (actual time=2.945..3.576 rows=469 loops=1)"
+"  ->  Index Scan using matched_tracks_pkey on matched_tracks t  (cost=0.43..3.15 rows=1 width=4) (actual time=0.038..0.038 rows=1 loops=469)"
 "        Index Cond: (id = s.trip_id)"
 "        Filter: (_st_dwithin('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326), geom, '0.0005'::double precision) AND _st_dwithin('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326), geom, '0.0005'::double precision))"
-"        Rows Removed by Filter: 1"
-"Planning time: 0.967 ms"
-<strong>"Execution time: 18.397 ms"</strong>
+"Planning time: 0.994 ms"
+<strong>"Execution time: 22.070 ms"</strong>
 </pre>
 
 <p>Wohoo! Even better than the point-based approach. So what are the results in the end?</p>
@@ -663,33 +662,33 @@ WHERE
     <li>seq_page_cost: 1</li>
 </ul>
 
-<p><strong>EDIT 23.05.18</strong>: Results from my last query were too good to be true :) When I cut everything into very small segments and check for intersection I can not use the <code>AND</code> condition in my first CTE. It has to be <code>OR</code>. With the final <code>_ST_DWithin</code> test, I will get the right amount of tracks going through both point. As you can see in the next query plan, the spatial search and the nested loop become more expensive and so it's actually slower again than the point-based approach.</p>
+<p><strong>EDIT 23.05.18</strong>: Results from my last query were too good to be true :) When I cut everything into very small segments and check for intersection I can not use the <code>AND</code> condition in my first CTE. It has to be <code>OR</code>. With the final <code>_ST_DWithin</code> test, I will get the right amount of tracks going through both points. As you can see in the next query plan the spatial search and the nested loop become more expensive and so it's actually slower again than the point-based approach.</p>
 
 <pre>
-"Nested Loop  (cost=4.62..7.36 rows=1 width=4) (actual time=163.273..705.691 <strong>rows=265</strong> loops=1)"
+"Nested Loop  (cost=4.62..7.36 rows=1 width=4) (actual time=148.276..882.810 <strong>rows=8621</strong> loops=1)"
 "  CTE find_segments"
-"    ->  Unique  (cost=4.18..4.19 rows=1 width=4) (actual time=153.928..172.919 rows=32165 loops=1)"
-"          ->  Sort  (cost=4.18..4.19 rows=1 width=4) (actual time=153.925..160.519 rows=39689 loops=1)"
+"    ->  Unique  (cost=4.18..4.19 rows=1 width=4) (actual time=148.171..166.844 rows=32165 loops=1)"
+"          ->  Sort  (cost=4.18..4.19 rows=1 width=4) (actual time=148.169..154.686 rows=39689 loops=1)"
 "                Sort Key: matched_tracks_segments.trip_id"
 "                Sort Method: quicksort  Memory: 3397kB"
-"                ->  Bitmap Heap Scan on matched_tracks_segments  (cost=3.06..4.17 rows=1 width=4) (actual time=46.986..138.956 rows=39689 loops=1)"
+"                ->  <strong>Bitmap Heap Scan on matched_tracks_segments  (cost=3.06..4.17 rows=1 width=4) (actual time=47.715..131.889 rows=39689 loops=1)</strong>"
 "                      Recheck Cond: (('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326) && fcd_segment_bbox) OR ('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326) && fcd_segment_bbox))"
 "                      Heap Blocks: exact=31146"
-"                      ->  BitmapOr  (cost=3.06..3.06 rows=1 width=0) (actual time=35.756..35.756 rows=0 loops=1)"
-"                            ->  Bitmap Index Scan on matched_tracks_segment_spx  (cost=0.00..1.53 rows=1 width=0) (actual time=9.954..9.954 rows=11045 loops=1)"
+"                      ->  BitmapOr  (cost=3.06..3.06 rows=1 width=0) (actual time=36.662..36.662 rows=0 loops=1)"
+"                            ->  Bitmap Index Scan on matched_tracks_segment_spx  (cost=0.00..1.53 rows=1 width=0) (actual time=10.069..10.069 rows=11045 loops=1)"
 "                                  Index Cond: ('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326) && fcd_segment_bbox)"
-"                            ->  Bitmap Index Scan on matched_tracks_segment_spx  (cost=0.00..1.53 rows=1 width=0) (actual time=25.799..25.799 rows=29113 loops=1)"
+"                            ->  Bitmap Index Scan on matched_tracks_segment_spx  (cost=0.00..1.53 rows=1 width=0) (actual time=26.589..26.589 rows=29113 loops=1)"
 "                                  Index Cond: ('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326) && fcd_segment_bbox)"
-"  ->  CTE Scan on find_segments s  (cost=0.00..0.02 rows=1 width=4) (actual time=153.933..182.607 rows=32165 loops=1)"
-"  ->  Index Scan using matched_tracks_pkey on matched_tracks t  (cost=0.43..3.15 rows=1 width=4) (actual time=0.016..0.016 rows=0 loops=32165)"
+"  ->  CTE Scan on find_segments s  (cost=0.00..0.02 rows=1 width=4) (actual time=148.174..177.130 rows=32165 loops=1)"
+"  ->  Index Scan using matched_tracks_pkey on matched_tracks t  (cost=0.43..3.15 rows=1 width=4) (actual time=0.021..0.021 rows=0 loops=32165)"
 "        Index Cond: (id = s.trip_id)"
 "        Filter: (_st_dwithin('0101000020E6100000F6285C8FC2752B4085EB51B81E854940'::geometry(Point,4326), geom, '0.0005'::double precision) AND _st_dwithin('0101000020E610000090A04C8A01772B4098E231FB06854940'::geometry(Point,4326), geom, '0.0005'::double precision))"
 "        Rows Removed by Filter: 1"
-"Planning time: 1.210 ms"
-"Execution time: 707.260 ms"
+"Planning time: 1.003 ms"
+<strong>"Execution time: 885.205 ms"</strong>
 </pre>
 
-<p>So, in the ned we might consider it a draw. However, you have seen that splitting up trajectories can boost spatial queries big time.</p>
+<p>So, in the end we might consider it a draw. However, you have seen that splitting up trajectories can boost spatial queries. If you choose bigger values for segmentation the performance might be even better because there would be less rows to process. I let you know, when I got some new insights.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/MAGDa-BeuthHS">MAGDa-BeuthHS</a></p>
