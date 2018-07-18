@@ -35,27 +35,27 @@
             <p>Es wurden Daten von 80 Induktionsschleifen zur Verfügung gestellt. Für eine Verortung in einer Karte war es notwendig die Sensorstandorte aus PDF-Lageplänen zu ermitteln und dann manuell zu digitalisieren. Die folgende Abbildung zeigt die Verteilung der Sensore über die Stadt. Aufgrund seines Einflusses auf den städtischen Verkehr ist das Gelände des Volkswagen-Werkes farblich hervorgehoben.</p>
             
             <img src="../media/wolfsburg_sensors.png" alt="Lage der Sensoren in Wolfsburg">
-            
+            <br/><br/>
 			<h2>Validierung der Messwerte</h2>
 			<p>Die übermittelten CSV-Dateinen wurde mit einem Java-Prozess in eine MySQL-Datenbank überführt, deren Tabellenstruktur dem des Stauatlasses entspricht. Für die weitere Auswertung und Aufbereitung der Kartenanwendung war vorgesehen, fehlerhafte Messwerte zu markieren und zu ignorieren. Eine <a href="https://magda-beuthhs.github.io/magdablog/articles/missing_data.html" alt="Artikel zur Behandlung von Missing Data" targer="_blank">Korrektur</a> wurde noch nicht angestoßen. Für die durchschnittliche Geschwindigkeit ergab sich an den meisten Standorten eine Streuung um die zulässige Höchgeschwindigkeit. Als fehlerhafte Messungen wurden Werte über das doppelte der zugelassenen Geschwindigkeit angesehen, was in den meisten Fällen ein Prozentsatz von 0.01% von allen Messungen eines Sensors entsprach. Für die Belegung wurde ebenfalls ein dynamischer Grenzwert definiert. Es wurde errechnet, wie viele 5 Meter lange Fahrzeuge theoretisch einen Sensor mit einer bestimmten Geschwindigkeit überfahren können. Bei steigender Geschwindigkeit nimmt die Anzahl linaer zu, wie an der roten Linie in der nächsten Abbildung dargestellt ist. Alle Werte links der Linie werden als ungültig angesehen.</p>
             
             <img src="../media/grenzwert_2d.png" alt="Grenzwert für theoretisch mögliche Belegung in 2D">
-            
+            <br/><br/>
             <p>Was nach einer großen Menge an fehlerhaften Daten wird in einen 3D-Scatterplot deutlich entschräft. Die Geringste Abdeckung mit validen Werten liegt bei 97,7%.</p>
             
             <img src="../media/grenzwert_3d.png" alt="Grenzwert für theoretisch mögliche Belegung in 3D">
-			
+			<br/><br/>
             <h2>Zeitliche Auswertung</h2>
 			<p>Mit dem Stauatlas kann der zeitliche Verlauf von Messungen aggregiert auf eine Stunde betrachtet werden. Je nach Menge an Fahrzeugen verändert sich die Größe des Sensorpunktes, je nach Geschwindigkeit die Farbe. Im Rahmen einer Masterarbeit wurden weitere Visualisierungsformen untersucht, die noch nicht im Stauatlas integriert sind. In einer Wochenansicht lassen sich sehr gut die täglichen Rush-Hour-Phasen abbilden. Es ist gut zu erkennen, dass der zweite Peak am Freitag durch einen vorgezogenen Feierabend früher und konzentrierter ausfällt.</p>
             
             <img src="../media/anzahl_autos_woche.png" alt="Anzahl Fahrzeuge pro Minute September 2017">
-            
+            <br/><br/>
             <p>Die weiteren Abbildungen zeigen Auswirkungen auf den Verkehr durch Ferienzeiten und besondere Ereignisse wie zum Beispiel ein Erstligaspiel der Wolfsburger Fussballmannschaft.</p>
             
             <img src="../media/anzahl_autos_ferien.png" alt="Anzahl Fahrzeuge pro Tag zu Ferienzeiten">
             <br/><br/>
             <img src="../media/verkehr_bei_fussballspiel.png" alt="Anzahl Autos während eines Fussballspiels">
-            
+            <br/><br/>
             <p>Zwar sind die Rush-Hour-Phasen und die Stauzonen sicherlich den lokalen Verkehrs- und Stadtplanern bekannt. Dennoch können Datenvisualisierungen und Anwendungen wie der Stauatlas einen besseren Überblick zur gesamten Verkehrssituation der Stadt liefern.</p>
             
 			<a href="http://141.64.5.234/excell-stauatlas/" alt="Stauatlas testen" target="_blank">Stauatlas ausprobieren</a>
